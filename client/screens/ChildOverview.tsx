@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +18,7 @@ type RootStackParamList = {
   ChildOverview: { child: Child };
   SelectChild: undefined;
   AddTask: { child: Child };
+  ApproveTasks: { child: Child };
   ChildTaskDashboard: undefined;
   Start: undefined;
 };
@@ -31,7 +33,7 @@ interface ChildOverviewProps {
 const ChildOverview: React.FC = () => {
   const navigation = useNavigation<ChildOverviewNavigationProp>();
   const { tasks } = useTaskContext();
-  const [child] = useState<Child>({
+  const [child, setChild] = useState<Child>({
     id: '1',
     name: 'Emma',
     age: 8,
@@ -40,6 +42,8 @@ const ChildOverview: React.FC = () => {
     completedTasks: 4,
     totalTasks: 7,
   });
+  const [showGoalModal, setShowGoalModal] = useState(false);
+  const [selectedGoal, setSelectedGoal] = useState(child.currentGoal);
 
   const handleBackPress = () => {
     navigation.navigate('SelectChild');
@@ -50,19 +54,26 @@ const ChildOverview: React.FC = () => {
   };
 
   const handleApproveTasks = () => {
+    navigation.navigate('ApproveTasks', { child });
+  };
+
+  const handleViewEditGoal = () => {
+    setShowGoalModal(true);
+  };
+
+  const handleSaveGoal = () => {
+    setChild(prev => ({ ...prev, currentGoal: selectedGoal }));
+    setShowGoalModal(false);
     Alert.alert(
-      'Approve Tasks',
-      'This will show tasks waiting for approval. Feature coming soon!',
+      'Goal Updated!',
+      `${child.name}'s goal has been updated to ${selectedGoal} gems.`,
       [{ text: 'OK' }]
     );
   };
 
-  const handleViewEditGoal = () => {
-    Alert.alert(
-      'View/Edit Goal',
-      `Current goal: ${child.currentGoal} gems\n\nFeature to edit goal coming soon!`,
-      [{ text: 'OK' }]
-    );
+  const handleCancelGoal = () => {
+    setSelectedGoal(child.currentGoal);
+    setShowGoalModal(false);
   };
 
   const handleViewChildTasks = () => {
@@ -182,6 +193,53 @@ const ChildOverview: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* Goal Edit Modal */}
+      <Modal
+        visible={showGoalModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCancelGoal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Edit {child.name}'s Goal</Text>
+            <Text style={styles.modalSubtitle}>Set the number of gems needed to reach the goal</Text>
+            
+            <View style={styles.goalSelector}>
+              <Text style={styles.goalLabel}>Goal Gems:</Text>
+              <View style={styles.goalButtons}>
+                {[5, 10, 15, 20, 25, 30].map(goal => (
+                  <TouchableOpacity
+                    key={goal}
+                    style={[
+                      styles.goalButton,
+                      selectedGoal === goal && styles.goalButtonSelected
+                    ]}
+                    onPress={() => setSelectedGoal(goal)}
+                  >
+                    <Text style={[
+                      styles.goalButtonText,
+                      selectedGoal === goal && styles.goalButtonTextSelected
+                    ]}>
+                      {goal}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={handleCancelGoal}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSaveGoal}>
+                <Text style={styles.saveButtonText}>Save Goal</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -361,6 +419,97 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748B',
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 24,
+    margin: 20,
+    width: '90%',
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  goalSelector: {
+    marginBottom: 24,
+  },
+  goalLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 12,
+  },
+  goalButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  goalButton: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    minWidth: 60,
+    alignItems: 'center',
+  },
+  goalButtonSelected: {
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+  },
+  goalButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  goalButtonTextSelected: {
+    color: '#FFFFFF',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });
 

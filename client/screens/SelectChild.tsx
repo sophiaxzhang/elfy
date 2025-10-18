@@ -12,12 +12,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Child, Parent } from '../types/childTypes';
 
 type RootStackParamList = {
-  ChildTaskDashboard: undefined;
+  ChildOverview: { child: Child };
   Dashboard: undefined;
   Start: undefined;
 };
 
-type SelectChildNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Start'>;
+type SelectChildNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ChildOverview'>;
 
 // Mock data - this will come from backend
 const mockParent: Parent = {
@@ -58,8 +58,8 @@ const SelectChild: React.FC = () => {
   const navigation = useNavigation<SelectChildNavigationProp>();
 
   const handleChildSelect = (child: Child) => {
-    // Navigate to child's dashboard
-    navigation.navigate('ChildTaskDashboard');
+    // Navigate to child's overview
+    navigation.navigate('ChildOverview', { child });
   };
 
   const handleBackToDashboard = () => {

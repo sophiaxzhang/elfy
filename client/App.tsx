@@ -9,6 +9,9 @@ import LoginScreen from './screens/LoginScreen';
 import StartScreen from './screens/StartScreen';
 import { AuthProvider } from './context/AuthContext';
 import DashboardScreen from './screens/DashboardScreen';
+import FamilySetupScreen from './screens/FamilySetupScreen';
+import PaymentSetupScreen from './screens/PaymentSetupScreen';
+import TokenConfigScreen from './screens/TokenConfigScreen';
 
 type RootStackParamList = {
   Home: undefined;
@@ -16,6 +19,9 @@ type RootStackParamList = {
   Start: undefined;
   Signup: undefined;
   Dashboard: undefined;
+  FamilySetup: undefined;
+  PaymentSetup: undefined;
+  TokenConfig: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -53,13 +59,19 @@ export default function App() {
     <AuthProvider>
       <NavigationContainer>
       <Stack.Navigator initialRouteName="Start">
+        <Stack.Screen name="Start" component={StartScreen}
+        options={{ headerShown: false }} />
         <Stack.Screen name="Home" component={HomeScreen} 
         options={{ headerShown: false }}/>
         <Stack.Screen name="Login" component={LoginScreen}/>
         <Stack.Screen name="Signup" component={SignupScreen}/>
-        <Stack.Screen name="Dashboard" component={DashboardScreen}/>
-        <Stack.Screen name="Start" component={StartScreen}
+        <Stack.Screen name="FamilySetup" component={FamilySetupScreen}
         options={{ headerShown: false }} />
+        <Stack.Screen name="PaymentSetup" component={PaymentSetupScreen}
+        options={{ headerShown: false }} />
+        <Stack.Screen name="TokenConfig" component={TokenConfigScreen}
+        options={{ headerShown: false }} />
+        <Stack.Screen name="Dashboard" component={DashboardScreen}/>
       </Stack.Navigator>
     </NavigationContainer>
     </AuthProvider>

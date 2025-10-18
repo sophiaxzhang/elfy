@@ -7,8 +7,6 @@ import SignupScreen from './screens/SignupScreen';
 import LoginScreen from './screens/LoginScreen';
 //import { setUser } from './services/userService';
 import StartScreen from './screens/StartScreen';
-import MealScreen from './screens/MealScreen';
-import SymptomScreen from './screens/SymptomScreen';
 import { AuthProvider } from './context/AuthContext';
 import DashboardScreen from './screens/DashboardScreen';
 
@@ -17,9 +15,7 @@ type RootStackParamList = {
   Login: undefined;
   Start: undefined;
   Signup: undefined;
-  Meal: undefined;
   Dashboard: undefined;
-  Symptom: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -62,8 +58,6 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen}/>
         <Stack.Screen name="Signup" component={SignupScreen}/>
         <Stack.Screen name="Dashboard" component={DashboardScreen}/>
-        <Stack.Screen name="Meal" component={MealScreen}/>
-        <Stack.Screen name="Symptom" component={SymptomScreen}/>
         <Stack.Screen name="Start" component={StartScreen}
         options={{ headerShown: false }} />
       </Stack.Navigator>

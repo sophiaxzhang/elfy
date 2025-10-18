@@ -9,6 +9,10 @@ import LoginScreen from './screens/LoginScreen';
 import StartScreen from './screens/StartScreen';
 import { AuthProvider } from './context/AuthContext';
 import DashboardScreen from './screens/DashboardScreen';
+import ChildTaskDashboard from './screens/ChildTaskDashboard';
+import TaskDetailScreen from './screens/TaskDetailScreen';
+import SelectChild from './screens/SelectChild';
+import { TaskProvider } from './context/TaskContext';
 
 type RootStackParamList = {
   Home: undefined;
@@ -16,6 +20,9 @@ type RootStackParamList = {
   Start: undefined;
   Signup: undefined;
   Dashboard: undefined;
+  SelectChild: undefined;
+  ChildTaskDashboard: undefined;
+  TaskDetail: { task: any };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -51,17 +58,25 @@ function HomeScreen() {
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer>
-      <Stack.Navigator initialRouteName="Start">
-        <Stack.Screen name="Home" component={HomeScreen} 
-        options={{ headerShown: false }}/>
-        <Stack.Screen name="Login" component={LoginScreen}/>
-        <Stack.Screen name="Signup" component={SignupScreen}/>
-        <Stack.Screen name="Dashboard" component={DashboardScreen}/>
-        <Stack.Screen name="Start" component={StartScreen}
-        options={{ headerShown: false }} />
-      </Stack.Navigator>
-    </NavigationContainer>
+      <TaskProvider>
+        <NavigationContainer>
+        <Stack.Navigator initialRouteName="Start">
+          <Stack.Screen name="Home" component={HomeScreen} 
+          options={{ headerShown: false }}/>
+          <Stack.Screen name="Login" component={LoginScreen}/>
+          <Stack.Screen name="Signup" component={SignupScreen}/>
+          <Stack.Screen name="Dashboard" component={DashboardScreen}/>
+          <Stack.Screen name="SelectChild" component={SelectChild}
+          options={{ headerShown: false }}/>
+          <Stack.Screen name="ChildTaskDashboard" component={ChildTaskDashboard}
+          options={{ headerShown: false }}/>
+          <Stack.Screen name="TaskDetail" component={TaskDetailScreen}
+          options={{ headerShown: false }}/>
+          <Stack.Screen name="Start" component={StartScreen}
+          options={{ headerShown: false }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      </TaskProvider>
     </AuthProvider>
     
   );

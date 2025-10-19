@@ -9,7 +9,7 @@ const PaymentTest = () => {
   const [password, setPassword] = useState('');
   const [transactionId, setTransactionId] = useState('');
 
-  const API_BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
+  const API_BASE_URL = `http://100.110.184.54:3000`;
 
   const login = async () => {
     try {

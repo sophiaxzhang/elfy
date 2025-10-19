@@ -18,6 +18,7 @@ import SelectChild from './screens/SelectChild';
 import ChildOverview from './screens/ChildOverview';
 import AddTask from './screens/AddTask';
 import ApproveTasks from './screens/ApproveTasks';
+import AITaskSuggestionsScreen from './screens/AITaskSuggestionsScreen';
 import { TaskProvider } from './context/TaskContext';
 
 type RootStackParamList = {
@@ -35,6 +36,7 @@ type RootStackParamList = {
   ApproveTasks: { child: any };
   ChildTaskDashboard: { child: any };
   TaskDetail: { task: any };
+  AITaskSuggestions: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -96,6 +98,8 @@ export default function App() {
             <Stack.Screen name="ChildTaskDashboard" component={ChildTaskDashboard}
             options={{ headerShown: false }}/>
             <Stack.Screen name="TaskDetail" component={TaskDetailScreen}
+            options={{ headerShown: false }}/>
+            <Stack.Screen name="AITaskSuggestions" component={AITaskSuggestionsScreen}
             options={{ headerShown: false }}/>
           </Stack.Navigator>
         </NavigationContainer>

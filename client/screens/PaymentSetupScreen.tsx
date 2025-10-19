@@ -109,7 +109,7 @@ const PaymentSetupScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/payment-method`, {
+      const response = await fetch(`http://100.110.184.54:3000/user/payment-method`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

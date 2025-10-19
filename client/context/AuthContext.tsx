@@ -6,6 +6,10 @@ interface AuthProps {
   user: User | null;
   isLoading: boolean;
   register: (name: string, email: string, password: string, pin: number) => Promise<any>;
+  // authState?: {token: string | null; authenticated: boolean | null};
+  user?: {name: string, email: string, password: string | null, id: number} | null;
+  setUser: (user: any) => void;
+  register: (name: string, email: string, password: string) => Promise<any>;
   login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<any>;
   refreshUser: () => Promise<void>;
@@ -46,6 +50,26 @@ export const AuthProvider = ({ children }: any) => {
       } else {
         throw new Error('Login failed');
       }
+        const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({email, password}),
+          });
+    
+        if (!response.ok) {
+          throw new Error("invalid login")
+        } 
+    
+        const data = await response.json();
+        console.log("login user data", data.user);
+        setUser(data.user);
+        console.log("storing token");
+
+        console.log("access token type: ", typeof (data.user.accessToken));
+        console.log("refresh token type: ", typeof (data.user.refreshToken));
+        await storeToken(data.user.accessToken);
+        await storeRefreshToken(data.user.refreshToken);
+        return data.user;
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -100,6 +124,7 @@ export const AuthProvider = ({ children }: any) => {
       logout, 
       refreshUser 
     }}>
+    <AuthContext.Provider value={{ user, setUser, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -41,14 +41,55 @@ export const UserService = {
             return { accessToken: accessToken, refreshToken: refreshToken, user: user };
         }
     },
-    async refreshToken(refreshToken) {
-        try {
-            const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-            const accessToken = jwt.sign({ userId: decoded.userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
-            return accessToken;
-        } catch (error) {
-            console.error("refresh token error:", error);
-            return null;
+
+    async updateTokenConfig(userId, tokenConfig) {
+        const { numberOfTokens, giftCardAmount } = tokenConfig;
+        const updatedConfig = await UserModel.updateTokenConfig({ 
+            userId, 
+            numberOfTokens: parseInt(numberOfTokens), 
+            giftCardAmount: parseFloat(giftCardAmount) 
+        });
+        return updatedConfig;
+    },
+
+    async saveFamilySetup(userId, familyData) {
+        console.log('saveFamilySetup called with:', { userId, familyData });
+        const { email, password, pin, children } = familyData;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        
+        // Update parent information
+        const updatedParent = await UserModel.upsertParentInfo({ 
+            userId: parseInt(userId), // Convert to number
+            email, 
+            password: hashedPassword, 
+            pin
+        });
+        
+        console.log('upsertParentInfo result:', updatedParent);
+        
+        // Create individual child records
+        let createdChildren = [];
+        if (children && children.length > 0) {
+            console.log('Creating children:', children);
+            createdChildren = await UserModel.createChildren({ children, parentId: parseInt(userId) });
+            console.log('Created children:', createdChildren);
         }
+        
+        return { parent: updatedParent, children: createdChildren };
+    },
+
+    async savePaymentMethod(userId, paymentData) {
+        const { cardNumber, expiryDate, cvv, cardholderName, billingAddress } = paymentData;
+        
+        // For now, we'll store the data as-is. In production, you'd want to encrypt sensitive data
+        const paymentMethod = await UserModel.createPaymentMethod({
+            userId: parseInt(userId),
+            cardNumber,
+            expiryDate,
+            cvv,
+            cardholderName,
+            billingAddress
+        });
+        return paymentMethod;
     }
 }

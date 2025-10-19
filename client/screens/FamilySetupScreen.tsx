@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../context/AuthContext';
+import { IP_ADDRESS, PORT } from '@env';
 
 type RootStackParamList = {
   PaymentSetup: undefined;
@@ -22,6 +24,7 @@ type RootStackParamList = {
 type FamilySetupScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'PaymentSetup'>;
 
 interface FamilySetupFormData {
+  name: string;
   email: string;
   familyPassword: string;
   parentPin: string;
@@ -35,7 +38,9 @@ interface Child {
 
 const FamilySetupScreen: React.FC = () => {
   const navigation = useNavigation<FamilySetupScreenNavigationProp>();
+  const { user, setUser } = useAuth() as { user: { id: number }, setUser: (user: any) => void };
   const [formData, setFormData] = useState<FamilySetupFormData>({
+    name: '',
     email: '',
     familyPassword: '',
     parentPin: '',
@@ -47,6 +52,11 @@ const FamilySetupScreen: React.FC = () => {
 
   const validateForm = (): boolean => {
     const newErrors: Partial<FamilySetupFormData> = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!formData.email.trim()) {
@@ -108,14 +118,70 @@ const FamilySetupScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Here you would typically save the family setup data
-      // For now, we'll just navigate to the next screen
-      navigation.navigate('PaymentSetup');
+      // Create new user first
+      const createUserResponse = await fetch(`http://10.2.90.74:3000/user/`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          password: formData.familyPassword,
+          pin: formData.parentPin
+        }),
+      });
+      if (!createUserResponse.ok) {
+        const errorText = await createUserResponse.text();
+        console.error('Create user error response:', errorText);
+        throw new Error(`Failed to create user account: ${errorText}`);
+      }
+
+      const userData = await createUserResponse.json();
+      
+      // Now save family setup with the new user ID
+      const response = await fetch(`http://10.2.90.74:3000/user/family-setup`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: userData.user.id,
+          email: formData.email.trim(),
+          password: formData.familyPassword,
+          pin: formData.parentPin,
+          children: children.map(child => ({ name: child.name }))
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Family setup error response:', errorText);
+        throw new Error(`Failed to save family setup: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Family setup saved:', data);
+
+      // Set user in AuthContext for future screens
+      setUser(userData.user);
+
+      Alert.alert(
+        'Success!',
+        'Your family account has been created successfully.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('PaymentSetup'),
+          },
+        ]
+      );
     } catch (error) {
       console.error('Family setup error:', error);
+      console.error('Error details:', error.message);
       Alert.alert(
         'Setup Failed',
-        'An error occurred during family setup. Please try again.'
+        `An error occurred during family setup: ${error.message}`
       );
     } finally {
       setIsLoading(false);
@@ -141,6 +207,19 @@ const FamilySetupScreen: React.FC = () => {
         </View>
 
         <View style={styles.form}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Enter your name:</Text>
+            <TextInput
+              style={[styles.input, errors.name && styles.inputError]}
+              placeholder="Enter your full name"
+              value={formData.name}
+              onChangeText={(value) => handleInputChange('name', value)}
+              autoCapitalize="words"
+              autoCorrect={false}
+            />
+            {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+          </View>
+
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Enter your email and Family password:</Text>
             <TextInput

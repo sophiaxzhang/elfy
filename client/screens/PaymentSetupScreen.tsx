@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../context/AuthContext';
+import { IP_ADDRESS, PORT } from '@env';
 
 type RootStackParamList = {
   FamilySetup: undefined;
@@ -31,6 +33,7 @@ interface PaymentSetupFormData {
 
 const PaymentSetupScreen: React.FC = () => {
   const navigation = useNavigation<PaymentSetupScreenNavigationProp>();
+  const { user } = useAuth() as { user: { id: number } };
   const [formData, setFormData] = useState<PaymentSetupFormData>({
     cardNumber: '',
     expiryDate: '',
@@ -106,14 +109,45 @@ const PaymentSetupScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Here you would typically save the payment data
-      // For now, we'll just navigate to the next screen
-      navigation.navigate('TokenConfig');
+      const response = await fetch(`http://10.2.90.74:3000/user/payment-method`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          cardNumber: formData.cardNumber.replace(/\s/g, ''), // Remove spaces
+          expiryDate: formData.expiryDate.replace(/\//g, ''), // Remove slashes (MMYY format)
+          cvv: formData.cvv,
+          cardholderName: formData.cardholderName.trim(),
+          billingAddress: formData.billingAddress.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Payment method error response:', errorText);
+        throw new Error(`Failed to save payment method: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Payment method saved:', data);
+
+      Alert.alert(
+        'Success!',
+        'Your payment method has been saved successfully.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('TokenConfig'),
+          },
+        ]
+      );
     } catch (error) {
       console.error('Payment setup error:', error);
       Alert.alert(
         'Payment Setup Failed',
-        'An error occurred during payment setup. Please try again.'
+        `An error occurred during payment setup: ${error.message}`
       );
     } finally {
       setIsLoading(false);

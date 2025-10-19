@@ -27,9 +27,11 @@ const mockTasks: Task[] = [
     id: '1',
     name: 'Clean Bedroom',
     gems: 5,
-    room: 'Bedroom',
+    location: 'Bedroom',
     status: 'not_started',
-    description: 'Make bed, organize desk, vacuum floor',
+    desc: 'Make bed, organize desk, vacuum floor',
+    child_id: 1,
+    parent_id: 1,
     createdAt: '2024-01-15T10:00:00Z',
     updatedAt: '2024-01-15T10:00:00Z',
   },
@@ -37,9 +39,11 @@ const mockTasks: Task[] = [
     id: '2',
     name: 'Wash Dishes',
     gems: 3,
-    room: 'Kitchen',
+    location: 'Kitchen',
     status: 'in_progress',
-    description: 'Wash all dishes in sink and put away',
+    desc: 'Wash all dishes in sink and put away',
+    child_id: 1,
+    parent_id: 1,
     createdAt: '2024-01-15T09:00:00Z',
     updatedAt: '2024-01-15T11:30:00Z',
   },
@@ -47,9 +51,11 @@ const mockTasks: Task[] = [
     id: '3',
     name: 'Take Out Trash',
     gems: 2,
-    room: 'Kitchen',
+    location: 'Kitchen',
     status: 'waiting_approval',
-    description: 'Take all trash bags to outside bins',
+    desc: 'Take all trash bags to outside bins',
+    child_id: 1,
+    parent_id: 1,
     createdAt: '2024-01-15T08:00:00Z',
     updatedAt: '2024-01-15T12:00:00Z',
   },
@@ -57,9 +63,11 @@ const mockTasks: Task[] = [
     id: '4',
     name: 'Vacuum Living Room',
     gems: 4,
-    room: 'Living Room',
+    location: 'Living Room',
     status: 'completed',
-    description: 'Vacuum entire living room area',
+    desc: 'Vacuum entire living room area',
+    child_id: 1,
+    parent_id: 1,
     createdAt: '2024-01-14T14:00:00Z',
     updatedAt: '2024-01-14T16:00:00Z',
   },
@@ -67,9 +75,11 @@ const mockTasks: Task[] = [
     id: '5',
     name: 'Organize Bookshelf',
     gems: 3,
-    room: 'Study',
+    location: 'Study',
     status: 'completed',
-    description: 'Sort books by genre and alphabetically',
+    desc: 'Sort books by genre and alphabetically',
+    child_id: 1,
+    parent_id: 1,
     createdAt: '2024-01-13T10:00:00Z',
     updatedAt: '2024-01-13T12:00:00Z',
   },
@@ -77,9 +87,11 @@ const mockTasks: Task[] = [
     id: '6',
     name: 'Water Plants',
     gems: 2,
-    room: 'Living Room',
+    location: 'Living Room',
     status: 'not_started',
-    description: 'Water all indoor plants and check soil moisture',
+    desc: 'Water all indoor plants and check soil moisture',
+    child_id: 1,
+    parent_id: 1,
     createdAt: '2024-01-16T09:00:00Z',
     updatedAt: '2024-01-16T09:00:00Z',
   },
@@ -87,9 +99,11 @@ const mockTasks: Task[] = [
     id: '7',
     name: 'Fold Laundry',
     gems: 4,
-    room: 'Bedroom',
+    location: 'Bedroom',
     status: 'not_started',
-    description: 'Fold and put away clean clothes',
+    desc: 'Fold and put away clean clothes',
+    child_id: 1,
+    parent_id: 1,
     createdAt: '2024-01-16T10:00:00Z',
     updatedAt: '2024-01-16T10:00:00Z',
   },
@@ -162,7 +176,7 @@ const ChildTaskDashboard: React.FC = () => {
     >
       <Text style={styles.taskName}>{task.name}</Text>
       <Text style={styles.taskGems}>💎 {task.gems} gems</Text>
-      <Text style={styles.taskRoom}>{task.room}</Text>
+      <Text style={styles.taskRoom}>{task.location}</Text>
     </TouchableOpacity>
   );
 
@@ -199,11 +213,18 @@ const ChildTaskDashboard: React.FC = () => {
         </View>
       </View>
       
-      {/* Progress Bar */}
-      <ChildProgressBar 
-        tasks={tasks} 
-        goalGems={15} // Mock goal gems - this will come from backend
-      />
+          {/* Progress Bar */}
+          <ChildProgressBar 
+            tasks={tasks} 
+            goalGems={15} // Mock goal gems - this will come from backend
+            childId="child-1" // Mock child ID
+            parentId="parent-1" // Mock parent ID
+            payoutAmount={10} // Mock payout amount
+            onPayoutTriggered={() => {
+              // Reset tasks or update UI after payout
+              console.log('Payout triggered!');
+            }}
+          />
       
       <ScrollView
         style={styles.scrollContainer}

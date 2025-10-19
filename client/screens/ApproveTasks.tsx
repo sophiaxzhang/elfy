@@ -98,12 +98,12 @@ const ApproveTasks: React.FC = () => {
       </View>
       
       <View style={styles.taskDetails}>
-        <Text style={styles.taskRoom}>🏠 {task.room}</Text>
-        {task.description && (
-          <Text style={styles.taskDescription}>📝 {task.description}</Text>
+        <Text style={styles.taskRoom}>🏠 {task.location}</Text>
+        {task.desc && (
+          <Text style={styles.taskDescription}>📝 {task.desc}</Text>
         )}
         <Text style={styles.taskDate}>
-          Submitted: {new Date(task.updatedAt).toLocaleDateString()}
+          Submitted: {task.updatedAt ? new Date(task.updatedAt).toLocaleDateString() : 'Unknown'}
         </Text>
       </View>
 

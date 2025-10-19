@@ -175,7 +175,7 @@ const TaskDetailScreen: React.FC = () => {
             
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>🏠 Location:</Text>
-              <Text style={styles.infoValue}>{currentTask.room}</Text>
+              <Text style={styles.infoValue}>{currentTask.location}</Text>
             </View>
             
             <View style={styles.infoRow}>

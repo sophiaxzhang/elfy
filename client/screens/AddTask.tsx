@@ -30,7 +30,7 @@ const AddTask: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     gems: '',
-    room: '',
+    location: '',
     description: '',
   });
 
@@ -49,8 +49,8 @@ const AddTask: React.FC = () => {
       newErrors.gems = 'Please enter a valid number of gems';
     }
 
-    if (!formData.room.trim()) {
-      newErrors.room = 'Room location is required';
+    if (!formData.location.trim()) {
+      newErrors.location = 'Room location is required';
     }
 
     setErrors(newErrors);
@@ -73,9 +73,11 @@ const AddTask: React.FC = () => {
       id: Date.now().toString(),
       name: formData.name.trim(),
       gems: Number(formData.gems),
-      room: formData.room.trim(),
+      location: formData.location.trim(),
       status: 'not_started',
-      description: formData.description.trim() || undefined,
+      desc: formData.description.trim() || undefined,
+      child_id: parseInt(child.id),
+      parent_id: 1, // You'll need to get this from auth context
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -154,10 +156,10 @@ const AddTask: React.FC = () => {
 
           <InputField
             label="Room Location"
-            value={formData.room}
-            onChangeText={(text) => handleInputChange('room', text)}
+            value={formData.location}
+            onChangeText={(text) => handleInputChange('location', text)}
             placeholder="e.g., Bedroom, Kitchen, Living Room"
-            error={errors.room}
+            error={errors.location}
           />
 
           <InputField
@@ -179,7 +181,7 @@ const AddTask: React.FC = () => {
               💎 {formData.gems || '0'} gems
             </Text>
             <Text style={styles.previewRoom}>
-              🏠 {formData.room || 'Room Location'}
+              🏠 {formData.location || 'Room Location'}
             </Text>
             {formData.description && (
               <Text style={styles.previewDescription}>

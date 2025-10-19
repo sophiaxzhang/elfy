@@ -5,32 +5,117 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { Task } from '../types/taskTypes';
+import { PayoutService } from '../services/payoutService';
+import { useAuth } from '../context/AuthContext';
+import { getToken } from '../services/authService';
 
 interface ChildProgressBarProps {
   tasks: Task[];
   goalGems: number; // Goal gems set by parent
   earnedGems?: number; // Optional override for earned gems count
+  childId?: string; // Child ID for payout
+  parentId?: string; // Parent ID for payout
+  payoutAmount?: number; // Amount to payout
+  onPayoutTriggered?: () => void; // Callback when payout is triggered
 }
 
 const ChildProgressBar: React.FC<ChildProgressBarProps> = ({ 
   tasks, 
   goalGems, 
-  earnedGems 
+  earnedGems,
+  childId,
+  parentId,
+  payoutAmount = 10,
+  onPayoutTriggered
 }) => {
+  const auth = useAuth();
+  const user = auth?.user;
   const [progress, setProgress] = useState(0);
+  const [hasTriggeredPayout, setHasTriggeredPayout] = useState(false);
   const animatedWidth = useRef(new Animated.Value(0)).current;
   const animatedRotation = useRef(new Animated.Value(0)).current;
   const animatedProgressScale = useRef(new Animated.Value(1)).current;
 
   // Calculate earned gems from completed tasks
+  // Note: Since your chore table doesn't have a status field, 
+  // you'll need to implement your own logic for determining completed tasks
   const calculatedEarnedGems = tasks
     .filter(task => task.status === 'completed')
     .reduce((total, task) => total + task.gems, 0);
   
   const totalEarnedGems = earnedGems ?? calculatedEarnedGems;
   const progressPercentage = Math.min((totalEarnedGems / goalGems) * 100, 100);
+  const hasReachedGoal = totalEarnedGems >= goalGems;
+
+  // Trigger payout when goal is reached
+  useEffect(() => {
+    if (hasReachedGoal && !hasTriggeredPayout && childId && parentId) {
+      setHasTriggeredPayout(true);
+      triggerPayout();
+    }
+  }, [hasReachedGoal, hasTriggeredPayout, childId, parentId]);
+
+  const triggerPayout = async () => {
+    try {
+      if (!user) {
+        Alert.alert('Authentication Required', 'Please log in to process payouts.');
+        return;
+      }
+      
+      Alert.alert(
+        '🎉 Goal Reached!',
+        `Congratulations! You've earned ${totalEarnedGems} gems and reached your goal of ${goalGems} gems. A payout of $${payoutAmount} will be processed.`,
+        [
+          {
+            text: 'OK',
+            onPress: async () => {
+              try {
+                const token = await getToken();
+                if (!token) {
+                  Alert.alert('Authentication Error', 'Please log in again.');
+                  return;
+                }
+                
+                const result = await PayoutService.triggerPayout(
+                  parentId!,
+                  childId!,
+                  payoutAmount,
+                  token
+                );
+                
+                if (result.success) {
+                  Alert.alert(
+                    'Payout Successful!',
+                    `$${payoutAmount} has been transferred to your account. Transaction ID: ${result.transactionId}`,
+                    [{ text: 'Great!' }]
+                  );
+                } else {
+                  Alert.alert(
+                    'Payout Failed',
+                    result.message || 'Please try again later.',
+                    [{ text: 'OK' }]
+                  );
+                }
+                
+                onPayoutTriggered?.();
+              } catch (error) {
+                Alert.alert(
+                  'Payout Error',
+                  'Failed to process payout. Please try again later.',
+                  [{ text: 'OK' }]
+                );
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Payout trigger error:', error);
+    }
+  };
 
   useEffect(() => {
     setProgress(progressPercentage);

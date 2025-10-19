@@ -29,7 +29,7 @@ export const UserService = {
         if(!user){
             return null;
         }
-        const validPassword = await bcrypt.compare(password, user.hashed_password);
+        const validPassword = await bcrypt.compare(password, user.password);
         if(!validPassword){
             return null;
         }
@@ -40,16 +40,15 @@ export const UserService = {
             console.log("refresh token: " + refreshToken);
             return { accessToken: accessToken, refreshToken: refreshToken, user: user };
         }
+    },
+    async refreshToken(refreshToken) {
+        try {
+            const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+            const accessToken = jwt.sign({ userId: decoded.userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
+            return accessToken;
+        } catch (error) {
+            console.error("refresh token error:", error);
+            return null;
+        }
     }
 }
-
-export const refreshToken = (refreshToken) => {
-    try {
-      const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-      const accessToken = jwt.sign({ userId: decoded.userId }, process.env.JWT_SECRET, { expiresIn: "15m" });
-      //res.json({ accessToken });
-      return accessToken;
-    } catch (error) {
-      res.status(401).json({ error: "Invalid refresh token" });
-    }
-  };

@@ -356,6 +356,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    top: 60,
+    padding: 8,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#A23E48',
+    fontWeight: 'bold',
   },
   headerTop: {
     flexDirection: 'row',

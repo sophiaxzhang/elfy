@@ -19,6 +19,7 @@ import ChildOverview from './screens/ChildOverview';
 import AddTask from './screens/AddTask';
 import ApproveTasks from './screens/ApproveTasks';
 import AITaskSuggestionsScreen from './screens/AITaskSuggestionsScreen';
+import ARElfScreen from './screens/ARElfScreen';
 import { TaskProvider } from './context/TaskContext';
 
 type RootStackParamList = {
@@ -36,7 +37,8 @@ type RootStackParamList = {
   ApproveTasks: { child: any };
   ChildTaskDashboard: { child: any };
   TaskDetail: { task: any };
-  AITaskSuggestions: undefined;
+  AITaskSuggestions: { child: any };
+  ARElf: { task: any; child: any };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -100,6 +102,8 @@ export default function App() {
             <Stack.Screen name="TaskDetail" component={TaskDetailScreen}
             options={{ headerShown: false }}/>
             <Stack.Screen name="AITaskSuggestions" component={AITaskSuggestionsScreen}
+            options={{ headerShown: false }}/>
+            <Stack.Screen name="ARElf" component={ARElfScreen}
             options={{ headerShown: false }}/>
           </Stack.Navigator>
         </NavigationContainer>

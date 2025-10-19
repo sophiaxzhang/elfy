@@ -268,7 +268,7 @@ const AITaskSuggestions: React.FC<AITaskSuggestionsProps> = ({
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#2E8B57" />
         <Text style={styles.loadingText}>Generating AI suggestions...</Text>
       </View>
     );
@@ -377,13 +377,13 @@ const AITaskSuggestions: React.FC<AITaskSuggestionsProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F9FAFB', // Snow Mist
   },
   header: {
     padding: 16,
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#C5F4E0', // Arctic Mint
   },
   headerTop: {
     flexDirection: 'row',
@@ -394,42 +394,42 @@ const styles = StyleSheet.create({
   backButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F9FAFB', // Snow Mist
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: '#C5F4E0', // Arctic Mint
   },
   backButtonText: {
     fontSize: 14,
-    color: '#495057',
+    color: '#A23E48', // Mulled Wine
     fontWeight: '600',
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#212529',
+    color: '#1E293B', // Midnight Slate
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6c757d',
+    color: '#1E293B', // Midnight Slate
     marginBottom: 12,
   },
   refreshButton: {
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#e9ecef',
+    backgroundColor: '#C5F4E0', // Arctic Mint
     borderRadius: 16,
   },
   refreshButtonText: {
     fontSize: 12,
-    color: '#495057',
+    color: '#1E293B', // Midnight Slate
     fontWeight: '600',
   },
   fallbackText: {
     fontSize: 12,
-    color: '#6c757d',
+    color: '#1E293B', // Midnight Slate
     fontStyle: 'italic',
     marginBottom: 8,
     textAlign: 'center',
@@ -439,11 +439,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   suggestionCard: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: '#A23E48', // Mulled Wine
     shadowOffset: {
       width: 0,
       height: 2,
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   },
   suggestionCardCreating: {
     opacity: 0.7,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F9FAFB', // Snow Mist
   },
   suggestionHeader: {
     flexDirection: 'row',
@@ -465,12 +465,12 @@ const styles = StyleSheet.create({
   suggestionName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#212529',
+    color: '#1E293B', // Midnight Slate
     flex: 1,
     marginRight: 8,
   },
   gemsContainer: {
-    backgroundColor: '#fff3cd',
+    backgroundColor: '#D4AF37', // Winter Gold
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -478,11 +478,11 @@ const styles = StyleSheet.create({
   gemsText: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#856404',
+    color: '#FFFFFF',
   },
   suggestionDescription: {
     fontSize: 14,
-    color: '#6c757d',
+    color: '#1E293B', // Midnight Slate
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: 12,
-    color: '#6c757d',
+    color: '#1E293B', // Midnight Slate
   },
   loadingContainer: {
     flex: 1,
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#6c757d',
+    color: '#1E293B', // Midnight Slate
   },
   errorContainer: {
     flex: 1,
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#dc3545',
+    color: '#C45C65', // Lighter Mulled Wine
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -545,18 +545,18 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#6c757d',
+    color: '#1E293B', // Midnight Slate
     textAlign: 'center',
     marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#2E8B57', // Evergreen Velvet
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   retryButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
   },

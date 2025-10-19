@@ -335,7 +335,7 @@ const FamilySetupScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -350,12 +350,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#1E293B',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#1E293B',
     textAlign: 'center',
   },
   form: {
@@ -367,24 +367,24 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
+    color: '#1E293B',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#C5F4E0',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     backgroundColor: '#FFFFFF',
-    color: '#1F2937',
+    color: '#1E293B',
   },
   inputError: {
-    borderColor: '#EF4444',
+    borderColor: '#C45C65',
   },
   errorText: {
-    color: '#EF4444',
+    color: '#C45C65',
     fontSize: 14,
     marginTop: 4,
   },
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1F2937',
+    color: '#1E293B',
     marginBottom: 16,
   },
   childInputRow: {
@@ -406,16 +406,16 @@ const styles = StyleSheet.create({
   childInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#C5F4E0',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     backgroundColor: '#FFFFFF',
-    color: '#1F2937',
+    color: '#1E293B',
   },
   confirmChildButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#2E8B57',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
   childrenListTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
+    color: '#1E293B',
     marginBottom: 12,
   },
   childItem: {
@@ -446,15 +446,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#C5F4E0',
   },
   childName: {
     fontSize: 16,
-    color: '#1F2937',
+    color: '#1E293B',
     fontWeight: '500',
   },
   removeChildButton: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#C45C65',
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -465,12 +465,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   nextButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#2E8B57',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#DC2626',
+    shadowColor: '#2E8B57',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -496,11 +496,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#1E293B',
   },
   loginLink: {
     fontSize: 16,
-    color: '#059669',
+    color: '#A23E48',
     fontWeight: '600',
   },
 });

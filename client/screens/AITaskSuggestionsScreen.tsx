@@ -8,119 +8,55 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { useRoute, RouteProp } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import AITaskSuggestions from '../src/components/AITaskSuggestions';
 import { TaskSuggestion } from '../src/services/aiTaskSuggestionService';
 import { useAuth } from '../context/AuthContext';
+import { Child } from '../types/childTypes';
+
+type RootStackParamList = {
+  AITaskSuggestions: { child: Child };
+};
+
+type AITaskSuggestionsRouteProp = RouteProp<RootStackParamList, 'AITaskSuggestions'>;
+type AITaskSuggestionsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'AITaskSuggestions'>;
 
 const AITaskSuggestionsScreen: React.FC = () => {
-  const [childName, setChildName] = useState('Emma');
-  const [childAge, setChildAge] = useState('8');
-  const [context, setContext] = useState('general');
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const route = useRoute<AITaskSuggestionsRouteProp>();
+  const { child } = route.params;
+  
+  const [showSuggestions, setShowSuggestions] = useState(true); // Start with suggestions shown
   
   const auth = useAuth();
   const user = auth?.user;
-  
-  // Mock child data for demonstration - in real app, this would come from props or state
-  const mockChildId = 1; // This would be the actual child ID
 
   const handleTaskCreated = (task: any) => {
     console.log('Task created successfully:', task);
-    // You could navigate back to the dashboard or show a success message
-  };
-
-  const handleGenerateSuggestions = () => {
-    if (!childName.trim() || !childAge.trim()) {
-      Alert.alert('Error', 'Please enter both child name and age');
-      return;
-    }
-
-    const age = parseInt(childAge);
-    if (isNaN(age) || age < 2 || age > 18) {
-      Alert.alert('Error', 'Please enter a valid age between 2 and 18');
-      return;
-    }
-
-    setShowSuggestions(true);
+    Alert.alert(
+      'Task Added! 🎉',
+      `"${task.name}" has been added to ${child.name}'s task list.`,
+      [{ text: 'OK' }]
+    );
   };
 
   if (showSuggestions) {
     return (
       <SafeAreaView style={styles.container}>
         <AITaskSuggestions
-          childAge={parseInt(childAge)}
-          childName={childName}
-          childId={mockChildId}
+          childAge={child.age}
+          childName={child.name}
+          childId={parseInt(child.id)}
           onTaskCreated={handleTaskCreated}
-          context={context}
+          context="general"
           enableTaskCreation={!!user} // Enable task creation if user is logged in
         />
       </SafeAreaView>
     );
   }
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.formContainer}>
-        <Text style={styles.title}>AI Task Suggestions</Text>
-        <Text style={styles.subtitle}>
-          Generate personalized task suggestions for your child
-        </Text>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Child's Name</Text>
-          <TextInput
-            style={styles.input}
-            value={childName}
-            onChangeText={setChildName}
-            placeholder="Enter child's name"
-            autoCapitalize="words"
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Child's Age</Text>
-          <TextInput
-            style={styles.input}
-            value={childAge}
-            onChangeText={setChildAge}
-            placeholder="Enter age (2-18)"
-            keyboardType="numeric"
-            maxLength={2}
-          />
-        </View>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Context (Optional)</Text>
-          <TextInput
-            style={styles.input}
-            value={context}
-            onChangeText={setContext}
-            placeholder="e.g., weekend, rainy day, before bedtime"
-          />
-        </View>
-
-        <TouchableOpacity
-          style={styles.generateButton}
-          onPress={handleGenerateSuggestions}
-        >
-          <Text style={styles.generateButtonText}>
-            🤖 Generate AI Suggestions
-          </Text>
-        </TouchableOpacity>
-
-        <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>How it works:</Text>
-          <Text style={styles.infoText}>
-            • AI analyzes your child's age and context{'\n'}
-            • Generates age-appropriate task suggestions{'\n'}
-            • Includes difficulty levels and reward amounts{'\n'}
-            • Considers time of day and context
-          </Text>
-        </View>
-      </View>
-    </SafeAreaView>
-  );
+  // This should not be reached since we start with showSuggestions = true
+  return null;
 };
 
 const styles = StyleSheet.create({

@@ -17,11 +17,12 @@ import { Child } from '../types/childTypes';
 type RootStackParamList = {
   ChildTaskDashboard: { child: Child };
   TaskDetail: { task: Task; child: Child };
+  ARElf: { task: Task; child: Child };
   Start: undefined;
 };
 
 type TaskDetailRouteProp = RouteProp<RootStackParamList, 'TaskDetail'>;
-type TaskDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ChildTaskDashboard'>;
+type TaskDetailNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const TaskDetailScreen: React.FC = () => {
   const navigation = useNavigation<TaskDetailNavigationProp>();
@@ -61,7 +62,7 @@ const TaskDetailScreen: React.FC = () => {
     }
   };
 
-  const updateTaskStatus = async (newStatus: number) => {
+  const updateTaskStatus = async (newStatus: number, shouldNavigateBack: boolean = true) => {
     try {
       setIsUpdating(true);
       
@@ -71,8 +72,10 @@ const TaskDetailScreen: React.FC = () => {
       
       setCurrentTask(updatedTask);
       
-      // Navigate back to ChildTaskDashboard
-      navigation.navigate('ChildTaskDashboard', { child });
+      // Only navigate back if explicitly requested
+      if (shouldNavigateBack) {
+        navigation.navigate('ChildTaskDashboard', { child });
+      }
       
     } catch (error) {
       console.error('Error updating task:', error);
@@ -83,14 +86,38 @@ const TaskDetailScreen: React.FC = () => {
   };
 
   const handleStartTask = () => {
+    console.log('Start Task button pressed');
+    console.log('Current task:', currentTask);
+    console.log('Child:', child);
+    
     Alert.alert(
       'Start Task',
-      'Are you ready to begin this task?',
+      'Are you ready to begin this task? You will enter AR mode where your elf will guide you!',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Start',
-          onPress: () => updateTaskStatus(1), // 1 = in_progress
+          text: 'Start with AR Elf',
+          onPress: () => {
+            console.log('Starting AR Elf with task:', currentTask);
+            // Navigate to AR Elf screen WITHOUT updating task status
+            navigation.navigate('ARElf', { task: currentTask, child });
+          },
+        },
+      ]
+    );
+  };
+
+  const handleMoveToInProgress = () => {
+    Alert.alert(
+      'Move to In Progress',
+      'Are you ready to mark this task as in progress?',
+      [
+        { text: 'Not Yet', style: 'cancel' },
+        {
+          text: 'Move to In Progress',
+          onPress: () => {
+            updateTaskStatus(1, false); // 1 = in_progress, false = don't navigate back
+          },
         },
       ]
     );
@@ -115,6 +142,8 @@ const TaskDetailScreen: React.FC = () => {
   };
 
   const getActionButton = () => {
+    console.log('Getting action button for task status:', currentTask.status);
+    
     if (isUpdating) {
       return (
         <View style={styles.loadingContainer}>
@@ -127,9 +156,14 @@ const TaskDetailScreen: React.FC = () => {
     switch (currentTask.status) {
       case 0: // not_started
         return (
-          <TouchableOpacity style={styles.startButton} onPress={handleStartTask}>
-            <Text style={styles.startButtonText}>Start Task</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={styles.startButton} onPress={handleStartTask}>
+              <Text style={styles.startButtonText}>Start Task</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.inProgressButton} onPress={handleMoveToInProgress}>
+              <Text style={styles.inProgressButtonText}>Move to In Progress</Text>
+            </TouchableOpacity>
+          </View>
         );
       case 1: // in_progress
         return (
@@ -332,12 +366,15 @@ const styles = StyleSheet.create({
   actionContainer: {
     marginBottom: 20,
   },
+  buttonContainer: {
+    gap: 12,
+  },
   startButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#2E8B57', // Evergreen Velvet
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: '#DC2626',
+    shadowColor: '#2E8B57',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -347,6 +384,25 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   startButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  inProgressButton: {
+    backgroundColor: '#A23E48', // Mulled Wine
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    shadowColor: '#A23E48',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  inProgressButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '600',

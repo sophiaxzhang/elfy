@@ -20,7 +20,6 @@ type RootStackParamList = {
   ChildTaskDashboard: { child: Child };
   SelectChild: undefined;
   Dashboard: undefined;
-  AITaskSuggestions: undefined;
 };
 
 type DashboardNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
@@ -134,7 +133,7 @@ const DashboardScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#DC2626" />
+          <ActivityIndicator size="large" color="#2E8B57" />
           <Text style={styles.loadingText}>Loading family data...</Text>
         </View>
       </SafeAreaView>
@@ -144,7 +143,7 @@ const DashboardScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Your family</Text>
+        <Text style={styles.title}>Family Profiles</Text>
         
         <View style={styles.familyMembersContainer}>
           {familyMembers.map((member) => (
@@ -168,15 +167,6 @@ const DashboardScreen: React.FC = () => {
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* AI Task Suggestions Button */}
-        <TouchableOpacity
-          style={styles.aiButton}
-          onPress={() => navigation.navigate('AITaskSuggestions')}
-        >
-          <Text style={styles.aiButtonText}>🤖 AI Task Suggestions</Text>
-          <Text style={styles.aiButtonSubtext}>Get personalized task ideas</Text>
-        </TouchableOpacity>
       </View>
 
       {/* PIN Modal */}
@@ -228,7 +218,7 @@ const DashboardScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB', // Snow Mist
   },
   content: {
     flex: 1,
@@ -239,7 +229,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#0F172A',
+    color: '#A23E48', // Mulled Wine accent color
     marginBottom: 48,
     textAlign: 'center',
   },
@@ -263,12 +253,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   parentButton: {
-    backgroundColor: '#FEF2F2', // Light red for parent (Christmas red)
-    shadowColor: '#FEF2F2',
+    backgroundColor: '#C45C65', // Lighter tint of Mulled Wine
+    shadowColor: '#A23E48',
   },
   childButton: {
-    backgroundColor: '#F0FDF4', // Light green for child (Christmas green)
-    shadowColor: '#F0FDF4',
+    backgroundColor: '#2E8B57', // Evergreen Velvet for child
+    shadowColor: '#2E8B57',
   },
   familyMemberName: {
     fontSize: 18,
@@ -276,44 +266,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   parentName: {
-    color: '#92400E', // Darker yellow text
+    color: '#FFFFFF', // White text on Mulled Wine
   },
   childName: {
-    color: '#1E40AF', // Darker blue text
+    color: '#FFFFFF', // White text on Evergreen Velvet
   },
   roleText: {
     fontSize: 14,
     fontWeight: '400',
     marginTop: 4,
-    opacity: 0.7,
-  },
-  aiButton: {
-    backgroundColor: '#6366F1', // Indigo color for AI
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    width: '80%',
-    alignItems: 'center',
-    marginTop: 24,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  aiButtonText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  aiButtonSubtext: {
-    fontSize: 14,
-    color: '#E0E7FF',
-    marginTop: 4,
-    textAlign: 'center',
+    color: '#FFFFFF', // White text for better contrast
+    opacity: 0.8,
   },
   loadingContainer: {
     flex: 1,
@@ -323,7 +286,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#DC2626',
+    color: '#1E293B', // Midnight Slate
   },
   // Modal styles
   modalOverlay: {
@@ -333,7 +296,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB', // Snow Mist
     borderRadius: 16,
     padding: 24,
     width: '80%',
@@ -342,25 +305,26 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#1E293B', // Midnight Slate
     textAlign: 'center',
     marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#1E293B', // Midnight Slate
     textAlign: 'center',
     marginBottom: 24,
   },
   pinInput: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#C5F4E0', // Arctic Mint
     borderRadius: 8,
     padding: 12,
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 24,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
+    color: '#1E293B', // Midnight Slate
   },
   modalButtons: {
     flexDirection: 'row',
@@ -373,15 +337,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F9FAFB', // Snow Mist
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#C5F4E0', // Arctic Mint
   },
   submitButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#2E8B57', // Evergreen Velvet
   },
   cancelButtonText: {
-    color: '#374151',
+    color: '#1E293B', // Midnight Slate
     fontSize: 16,
     fontWeight: '600',
   },

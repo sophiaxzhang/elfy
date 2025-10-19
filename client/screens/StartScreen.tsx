@@ -50,7 +50,7 @@ const StartScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F9FAFB',
   },
   content: {
     flex: 1,
@@ -61,13 +61,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1f2937',
+    color: '#1E293B',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#1E293B',
     marginBottom: 48,
     textAlign: 'center',
   },
@@ -76,12 +76,12 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   primaryButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#2E8B57',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#3b82f6',
+    shadowColor: '#2E8B57',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -102,10 +102,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#3b82f6',
+    borderColor: '#A23E48',
   },
   secondaryButtonText: {
-    color: '#3b82f6',
+    color: '#A23E48',
     fontSize: 18,
     fontWeight: '600',
   },

@@ -16,12 +16,12 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RootStackParamList = {
-  Signup: undefined;
+  FamilySetup: undefined;
   Dashboard: undefined;
   Home: undefined;
 };
 
-type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Signup'>;
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'FamilySetup'>;
 
 interface LoginFormData {
   email: string;
@@ -101,7 +101,7 @@ const LoginScreen: React.FC = () => {
   };
 
   const navigateToSignup = () => {
-    navigation.navigate('Signup');
+    navigation.navigate('FamilySetup');
   };
 
   return (
@@ -174,7 +174,7 @@ const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F9FAFB',
   },
   scrollContainer: {
     flexGrow: 1,
@@ -189,12 +189,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1F2937',
+    color: '#1E293B',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#1E293B',
     textAlign: 'center',
   },
   form: {
@@ -206,34 +206,34 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
+    color: '#1E293B',
     marginBottom: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#C5F4E0',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     backgroundColor: '#FFFFFF',
-    color: '#1F2937',
+    color: '#1E293B',
   },
   inputError: {
-    borderColor: '#EF4444',
+    borderColor: '#C45C65',
   },
   errorText: {
-    color: '#EF4444',
+    color: '#C45C65',
     fontSize: 14,
     marginTop: 4,
   },
   loginButton: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#2E8B57',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#DC2626',
+    shadowColor: '#2E8B57',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -259,11 +259,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: '#1E293B',
   },
   signupLink: {
     fontSize: 16,
-    color: '#059669',
+    color: '#A23E48',
     fontWeight: '600',
   },
 });

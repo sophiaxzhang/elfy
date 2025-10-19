@@ -1,13 +1,14 @@
 {
   "dependencies": {
-    "@react-native-community/datetimepicker": "^8.4.3",
-    "expo": "^53.0.20",
-    "expo-linear-gradient": "~14.1.5",
+    "@react-native-community/datetimepicker": "8.4.4",
+    "expo": "^54.0.13",
+    "expo-linear-gradient": "~15.0.7",
+    "metro": "^0.83.1",
     "react-native-gifted-charts": "^1.4.63",
-    "react-native-svg": "15.11.2"
+    "react-native-svg": "15.12.1"
   },
   "devDependencies": {
-    "typescript": "~5.8.3",
-    "@types/react": "~19.0.10"
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2"
   }
 }

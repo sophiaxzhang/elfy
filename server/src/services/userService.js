@@ -29,7 +29,7 @@ export const UserService = {
         if(!user){
             return null;
         }
-        const validPassword = await bcrypt.compare(password, user.hashed_password);
+        const validPassword = await bcrypt.compare(password, user.password);
         if(!validPassword){
             return null;
         }
@@ -40,6 +40,37 @@ export const UserService = {
             console.log("refresh token: " + refreshToken);
             return { accessToken: accessToken, refreshToken: refreshToken, user: user };
         }
+    },
+
+    async updateTokenConfig(userId, tokenConfig) {
+        const { numberOfTokens, giftCardAmount } = tokenConfig;
+        const updatedConfig = await UserModel.updateTokenConfig({ 
+            userId, 
+            numberOfTokens: parseInt(numberOfTokens), 
+            giftCardAmount: parseFloat(giftCardAmount) 
+        });
+        return updatedConfig;
+    },
+
+    async saveFamilySetup(userId, familyData) {
+        console.log('saveFamilySetup called with:', { userId, familyData });
+        const { email, password, pin, children } = familyData;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        
+        console.log('About to call upsertParentInfo with:', { userId, email, pin, children });
+        
+        // Update parent information including children as JSON array
+        const updatedParent = await UserModel.upsertParentInfo({ 
+            userId: parseInt(userId), // Convert to number
+            email, 
+            password: hashedPassword, 
+            pin,
+            children: children || [] // Save children as JSON array
+        });
+        
+        console.log('upsertParentInfo result:', updatedParent);
+        
+        return { parent: updatedParent, children: children || [] };
     }
 }
 

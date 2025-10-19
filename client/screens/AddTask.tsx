@@ -15,13 +15,13 @@ import { Child } from '../types/childTypes';
 import { Task, STATUS_TO_INT } from '../types/taskTypes';
 import { TaskService } from '../services/taskService';
 import { useAuth } from '../context/AuthContext';
-import AITaskSuggestions from '../src/components/AITaskSuggestions';
+// Removed inline AITaskSuggestions import; we navigate to a dedicated screen instead
 
 type RootStackParamList = {
   AddTask: { child: Child };
   ChildOverview: { child: Child };
+  AITaskSuggestions: { child: Child };
   Start: undefined;
-  AITaskSuggestions: undefined;
 };
 
 type AddTaskRouteProp = RouteProp<RootStackParamList, 'AddTask'>;
@@ -46,7 +46,10 @@ const AddTask: React.FC = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAISuggestions, setShowAISuggestions] = useState(false);
+
+  const handleAISuggestionsPress = () => {
+    navigation.navigate('AITaskSuggestions', { child });
+  };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -122,13 +125,6 @@ const AddTask: React.FC = () => {
   };
 
   const handleBackPress = () => {
-    navigation.navigate('ChildOverview', { child });
-  };
-
-  const handleAITaskCreated = (createdTask: any) => {
-    console.log('AI task created:', createdTask);
-    setShowAISuggestions(false);
-    // Navigate back to child overview to show the new task
     navigation.navigate('ChildOverview', { child });
   };
 
@@ -213,30 +209,18 @@ const AddTask: React.FC = () => {
           {/* AI Suggestions Button */}
           <TouchableOpacity
             style={styles.aiButton}
-            onPress={() => setShowAISuggestions(!showAISuggestions)}
+            onPress={handleAISuggestionsPress}
           >
             <Text style={styles.aiButtonText}>
-              🤖 {showAISuggestions ? 'Hide' : 'Get'} AI Suggestions
+              🤖 Get AI Suggestions
             </Text>
             <Text style={styles.aiButtonSubtext}>
-              {showAISuggestions ? 'Tap to hide suggestions' : 'Let AI help you create the perfect task'}
+              Let AI help you create the perfect task
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* AI Suggestions */}
-        {showAISuggestions && (
-          <View style={styles.aiSuggestionsContainer}>
-            <AITaskSuggestions
-              childAge={child.age}
-              childName={child.name}
-              childId={parseInt(child.id)}
-              onTaskCreated={handleAITaskCreated}
-              context="general"
-              enableTaskCreation={true}
-            />
-          </View>
-        )}
+          {/* AI Suggestions moved to dedicated screen */}
 
         <View style={styles.previewContainer}>
           <Text style={styles.previewTitle}>Task Preview</Text>

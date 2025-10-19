@@ -21,6 +21,7 @@ import { Child } from '../types/childTypes';
 type RootStackParamList = {
   ChildTaskDashboard: { child: Child };
   TaskDetail: { task: Task; child: Child };
+  Dashboard: undefined;
   Start: undefined;
 };
 
@@ -103,7 +104,7 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
   };
 
   const handleBackPress = () => {
-    navigation.goBack();
+    navigation.navigate('Dashboard');
   };
 
   const getStatusText = (status: TaskStatus): string => {
@@ -177,6 +178,9 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>{child.name}'s Tasks</Text>
           <Text style={styles.subtitle}>Complete your tasks to earn rewards!</Text>
@@ -218,6 +222,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
@@ -226,6 +231,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 20,
+    top: 60,
+    padding: 8,
+  },
+  backButtonText: {
+    fontSize: 24,
+    color: '#A23E48',
+    fontWeight: 'bold',
   },
   headerContent: {
     alignItems: 'center',

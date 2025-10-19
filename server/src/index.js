@@ -21,25 +21,21 @@ app.use('/api', payoutRoutes);
 app.use('/api/payment-methods', paymentMethodRoutes);
 app.use('/api/ai', aiTaskSuggestionRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Test endpoint for Visa Direct (no auth required for testing)
-app.post('/test-visa', MockPayoutController.testTriggerPayout);
-
-// Test endpoint for AI suggestions (no auth required for testing)
+// Test endpoint for AI suggestions (no auth required for testing) - moved up
 app.post('/test-ai-suggestions', async (req, res) => {
   try {
     const { AITaskSuggestionService } = await import('./services/aiTaskSuggestionService.js');
     const { childAge, childName, context = 'general' } = req.body;
+    
+    console.log('AI Suggestions request:', { childAge, childName, context });
     
     const suggestions = await AITaskSuggestionService.generateTaskSuggestions({
       childAge: parseInt(childAge),
       childName: childName.trim(),
       context: context.trim()
     });
+    
+    console.log('AI Suggestions response:', suggestions);
     
     res.json({
       success: true,
@@ -55,6 +51,14 @@ app.post('/test-ai-suggestions', async (req, res) => {
     });
   }
 });
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Test endpoint for Visa Direct (no auth required for testing)
+app.post('/test-visa', MockPayoutController.testTriggerPayout);
 
 // Test route
 app.get('/', (req, res) => {

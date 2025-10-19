@@ -78,7 +78,21 @@ export const PaymentService = {
                 responseData: JSON.stringify(apiResponse)
             });
 
-            // Update parent's gift card amount
+            // Attempt to purchase a gift card matching the pulled amount
+            let giftCardResult = null;
+            try {
+                const { GiftCardService } = await import('./giftCardService.js');
+                giftCardResult = await GiftCardService.purchaseGiftCard({
+                    amountUsd: amount,
+                    recipientEmail: null,
+                    note: `Elfly payout for user ${userId}`
+                });
+                console.log('🎁 Gift card purchase result:', giftCardResult);
+            } catch (giftErr) {
+                console.warn('⚠️ Gift card purchase failed or not configured:', giftErr?.message || giftErr);
+            }
+
+            // Update parent's gift card amount (for UI balance tracking)
             await UserModel.updateGiftCardAmount(userId, amount);
 
             return transaction;

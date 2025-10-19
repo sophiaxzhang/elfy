@@ -40,12 +40,29 @@ export const MockPayoutController = {
       const payoutResult = await MockVisaService.processPayout(mockParent, amount);
       
       console.log('💳 Visa Response:', payoutResult);
+
+      // After successful mock payout, attempt to purchase a mock gift card for the same amount
+      let giftCard = null;
+      if (payoutResult?.success) {
+        try {
+          const { GiftCardService } = await import('../services/giftCardService.js');
+          giftCard = await GiftCardService.purchaseGiftCard({
+            amountUsd: amount,
+            recipientEmail: null,
+            note: `Mock payout gift card for parent ${mockParent.id}`
+          });
+          console.log('🎁 Gift card result:', giftCard);
+        } catch (gcErr) {
+          console.warn('⚠️ Gift card purchase failed or not configured:', gcErr?.message || gcErr);
+        }
+      }
       
       res.json({
         success: payoutResult.success,
         transactionId: payoutResult.transactionId,
         visaResponse: payoutResult.visaResponse,
         message: payoutResult.message,
+        giftCard,
         mockData: {
           parent: mockParent.name,
           child: mockChild.name,

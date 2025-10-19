@@ -16,5 +16,14 @@ export const UserModel = {
     `, [name, email, pin, password]);
 
     return result.rows[0];
+  },
+
+  async createChild({ name, parentId, gem }) {
+    const result = await db.query(`
+      INSERT INTO child (name, parent_id, gem)
+      VALUES ($1, $2, $3)
+      RETURNING id, name, parent_id, gem
+    `, [name, parentId, gem]);
+    return result.rows[0];
   }
 };

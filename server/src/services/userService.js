@@ -17,6 +17,12 @@ export const UserService = {
         console.log("refresh token: " + refreshToken);
         return { accessToken: accessToken, refreshToken: refreshToken, user: createdUser }; 
     },
+    async createChild(newChild){
+        const {name, parentId, gem} = newChild;
+        const createdChild = await UserModel.createChild({ name, parentId, gem });
+        return createdChild;
+    },
+
     async loginUser(email, password){
         //return token !!!
         const user = await UserModel.findByEmail(email);

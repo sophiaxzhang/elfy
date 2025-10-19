@@ -14,6 +14,17 @@ export const UserController = {
         }
     },
 
+    async createChild(req, res){
+        console.log("incoming child body:", req.body);
+        try {
+            const newChild = await UserService.createChild(req.body);
+            res.status(200).json(newChild);
+        } catch (error) {
+            console.error("child creation error:", error);
+            res.status(500).send({message: "internal server error"});
+        }
+    },
+
     async loginUser(req, res){
         console.log("incoming user body:", req.body);
         try {

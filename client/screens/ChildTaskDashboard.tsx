@@ -193,14 +193,10 @@ const ChildTaskDashboard: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Text style={styles.backButtonText}>← Back to Start</Text>
-        </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>My Chores</Text>
           <Text style={styles.subtitle}>Complete your tasks to earn rewards!</Text>
         </View>
-        <View style={styles.placeholder} />
       </View>
       
       {/* Progress Bar */}
@@ -231,9 +227,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
@@ -241,17 +236,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
-  backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#3B82F6',
-    fontWeight: '500',
-  },
   headerContent: {
-    flex: 1,
     alignItems: 'center',
   },
   title: {
@@ -264,9 +249,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
-  },
-  placeholder: {
-    width: 80,
   },
   scrollContainer: {
     flex: 1,

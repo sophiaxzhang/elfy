@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 type RootStackParamList = {
   FamilySetup: undefined;
   Login: undefined;
+  ARElf: undefined;
 };
 
 type StartScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'FamilySetup'>;
@@ -19,6 +20,10 @@ const StartScreen: React.FC = () => {
 
   const handleLoginToFamily = () => {
     navigation.navigate('Login');
+  };
+
+  const handleTestAR = () => {
+    navigation.navigate('ARElf');
   };
 
   return (
@@ -40,6 +45,13 @@ const StartScreen: React.FC = () => {
             onPress={handleLoginToFamily}
           >
             <Text style={styles.secondaryButtonText}>Log In to Family</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.testButton} 
+            onPress={handleTestAR}
+          >
+            <Text style={styles.testButtonText}>🎄 Test AR Elf</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -106,6 +118,19 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: '#3b82f6',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  testButton: {
+    backgroundColor: '#10B981',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  testButtonText: {
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
   },

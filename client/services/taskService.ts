@@ -1,7 +1,7 @@
 import { getToken } from './authService';
 import { IP_ADDRESS, PORT } from '@env';
 
-const API_BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
+const API_BASE_URL = `http://100.110.184.54:3000`;
 
 export interface Task {
   id: string;

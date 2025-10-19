@@ -79,7 +79,7 @@ const TokenConfigScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/token-config`, {
+      const response = await fetch(`http://100.110.184.54:3000/user/token-config`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

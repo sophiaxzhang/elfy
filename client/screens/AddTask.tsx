@@ -15,11 +15,13 @@ import { Child } from '../types/childTypes';
 import { Task, STATUS_TO_INT } from '../types/taskTypes';
 import { TaskService } from '../services/taskService';
 import { useAuth } from '../context/AuthContext';
+import AITaskSuggestions from '../src/components/AITaskSuggestions';
 
 type RootStackParamList = {
   AddTask: { child: Child };
   ChildOverview: { child: Child };
   Start: undefined;
+  AITaskSuggestions: undefined;
 };
 
 type AddTaskRouteProp = RouteProp<RootStackParamList, 'AddTask'>;
@@ -44,6 +46,7 @@ const AddTask: React.FC = () => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAISuggestions, setShowAISuggestions] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -119,6 +122,13 @@ const AddTask: React.FC = () => {
   };
 
   const handleBackPress = () => {
+    navigation.navigate('ChildOverview', { child });
+  };
+
+  const handleAITaskCreated = (createdTask: any) => {
+    console.log('AI task created:', createdTask);
+    setShowAISuggestions(false);
+    // Navigate back to child overview to show the new task
     navigation.navigate('ChildOverview', { child });
   };
 
@@ -199,7 +209,34 @@ const AddTask: React.FC = () => {
             placeholder="Additional instructions for the child..."
             multiline={true}
           />
+
+          {/* AI Suggestions Button */}
+          <TouchableOpacity
+            style={styles.aiButton}
+            onPress={() => setShowAISuggestions(!showAISuggestions)}
+          >
+            <Text style={styles.aiButtonText}>
+              🤖 {showAISuggestions ? 'Hide' : 'Get'} AI Suggestions
+            </Text>
+            <Text style={styles.aiButtonSubtext}>
+              {showAISuggestions ? 'Tap to hide suggestions' : 'Let AI help you create the perfect task'}
+            </Text>
+          </TouchableOpacity>
         </View>
+
+        {/* AI Suggestions */}
+        {showAISuggestions && (
+          <View style={styles.aiSuggestionsContainer}>
+            <AITaskSuggestions
+              childAge={child.age}
+              childName={child.name}
+              childId={parseInt(child.id)}
+              onTaskCreated={handleAITaskCreated}
+              context="general"
+              enableTaskCreation={true}
+            />
+          </View>
+        )}
 
         <View style={styles.previewContainer}>
           <Text style={styles.previewTitle}>Task Preview</Text>
@@ -353,6 +390,40 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748B',
     fontStyle: 'italic',
+  },
+  aiButton: {
+    backgroundColor: '#6366F1',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  aiButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  aiButtonSubtext: {
+    color: '#E0E7FF',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  aiSuggestionsContainer: {
+    marginVertical: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   createButton: {
     backgroundColor: '#10B981',

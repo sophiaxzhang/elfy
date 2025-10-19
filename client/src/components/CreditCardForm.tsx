@@ -31,7 +31,7 @@ const CreditCardForm = ({ onPaymentSuccess, onPaymentError }: CreditCardFormProp
   });
   const [loading, setLoading] = useState(false);
 
-  const API_BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
+  const API_BASE_URL = `http://100.110.184.54:3000`;
 
   const formatCardNumber = (text: string) => {
     // Remove all non-digits

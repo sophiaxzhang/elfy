@@ -20,6 +20,7 @@ type RootStackParamList = {
   ChildTaskDashboard: { child: Child };
   SelectChild: undefined;
   Dashboard: undefined;
+  AITaskSuggestions: undefined;
 };
 
 type DashboardNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Dashboard'>;
@@ -167,6 +168,15 @@ const DashboardScreen: React.FC = () => {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* AI Task Suggestions Button */}
+        <TouchableOpacity
+          style={styles.aiButton}
+          onPress={() => navigation.navigate('AITaskSuggestions')}
+        >
+          <Text style={styles.aiButtonText}>🤖 AI Task Suggestions</Text>
+          <Text style={styles.aiButtonSubtext}>Get personalized task ideas</Text>
+        </TouchableOpacity>
       </View>
 
       {/* PIN Modal */}
@@ -276,6 +286,34 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     marginTop: 4,
     opacity: 0.7,
+  },
+  aiButton: {
+    backgroundColor: '#6366F1', // Indigo color for AI
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    width: '80%',
+    alignItems: 'center',
+    marginTop: 24,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  aiButtonText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  aiButtonSubtext: {
+    fontSize: 14,
+    color: '#E0E7FF',
+    marginTop: 4,
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,

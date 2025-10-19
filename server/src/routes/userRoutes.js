@@ -12,4 +12,5 @@ router.post('/login', UserController.loginUser);
 router.post('/refresh-token', UserController.refreshToken);
 router.put('/token-config', UserController.updateTokenConfig);
 router.put('/family-setup', UserController.saveFamilySetup);
+router.post('/payment-method', UserController.savePaymentMethod);
 export default router;

@@ -117,10 +117,6 @@ const FamilySetupScreen: React.FC = () => {
     }
 
     setIsLoading(true);
-    console.log("HANDLENEXT CALLED");
-    console.log("IP_ADDRESS:", IP_ADDRESS);
-    console.log("PORT:", PORT);
-    console.log("Full URL:", `http://${IP_ADDRESS}:${PORT}/user/`);
     try {
       // Create new user first
       const createUserResponse = await fetch(`http://10.2.90.74:3000/user/`, {
@@ -135,7 +131,6 @@ const FamilySetupScreen: React.FC = () => {
           pin: formData.parentPin
         }),
       });
-      console.log("createUserResponse: ", createUserResponse);
       if (!createUserResponse.ok) {
         const errorText = await createUserResponse.text();
         console.error('Create user error response:', errorText);
@@ -143,7 +138,6 @@ const FamilySetupScreen: React.FC = () => {
       }
 
       const userData = await createUserResponse.json();
-      console.log('User created:', userData);
       
       // Now save family setup with the new user ID
       const response = await fetch(`http://10.2.90.74:3000/user/family-setup`, {

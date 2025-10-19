@@ -77,14 +77,21 @@ export const UserController = {
     },
 
     async updateTokenConfig(req, res){
-        console.log("incoming token config body:", req.body);
         try {
             const { userId, numberOfTokens, giftCardAmount } = req.body;
+            console.log("Extracted data:", { userId, numberOfTokens, giftCardAmount });
+            
+            if (!userId) {
+                console.error("Missing userId in request");
+                return res.status(400).json({ message: "User ID is required" });
+            }
+            
             const updatedConfig = await UserService.updateTokenConfig(userId, { numberOfTokens, giftCardAmount });
             res.status(200).json({ success: true, config: updatedConfig });
         } catch (error) {
             console.error("token config update error:", error);
-            res.status(500).send({message: "internal server error"});
+            console.error("Error stack:", error.stack);
+            res.status(500).json({message: "internal server error"});
         }
     },
 
@@ -99,6 +106,28 @@ export const UserController = {
             res.status(200).json({ success: true, family: familyData });
         } catch (error) {
             console.error("family setup save error:", error);
+            console.error("Error stack:", error.stack);
+            res.status(500).send({message: "internal server error"});
+        }
+    },
+
+    async savePaymentMethod(req, res){
+        console.log("=== PAYMENT METHOD REQUEST ===");
+        console.log("incoming payment method body:", req.body);
+        try {
+            const { userId, cardNumber, expiryDate, cvv, cardholderName, billingAddress } = req.body;
+            console.log("Extracted payment data:", { userId, cardNumber, expiryDate, cvv, cardholderName, billingAddress });
+            const paymentMethod = await UserService.savePaymentMethod(userId, { 
+                cardNumber, 
+                expiryDate, 
+                cvv, 
+                cardholderName, 
+                billingAddress 
+            });
+            console.log("Payment method saved successfully:", paymentMethod);
+            res.status(200).json({ success: true, paymentMethod });
+        } catch (error) {
+            console.error("payment method save error:", error);
             console.error("Error stack:", error.stack);
             res.status(500).send({message: "internal server error"});
         }

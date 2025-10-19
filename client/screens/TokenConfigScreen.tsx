@@ -79,7 +79,7 @@ const TokenConfigScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/token-config`, {
+      const response = await fetch(`http://10.2.90.74:3000/user/token-config`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -92,7 +92,9 @@ const TokenConfigScreen: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save token configuration');
+        const errorText = await response.text();
+        console.error('Token config error response:', errorText);
+        throw new Error(`Failed to save token configuration: ${errorText}`);
       }
 
       const data = await response.json();
@@ -110,9 +112,10 @@ const TokenConfigScreen: React.FC = () => {
       );
     } catch (error) {
       console.error('Token config error:', error);
+      console.error('Error details:', error.message);
       Alert.alert(
         'Configuration Failed',
-        'An error occurred during token configuration. Please try again.'
+        `An error occurred during token configuration: ${error.message}`
       );
     } finally {
       setIsLoading(false);

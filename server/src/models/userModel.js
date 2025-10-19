@@ -37,22 +37,22 @@ export const UserModel = {
     return result.rows[0];
   },
 
-  async upsertParentInfo({ userId, email, password, pin, children = [] }) {
+  async upsertParentInfo({ userId, email, password, pin }) {
     // First try to update
     let result = await db.query(`
       UPDATE parent 
-      SET email = $1, password = $2, pin = $3, children = $4, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $5
-      RETURNING id, email, pin, children
-    `, [email, password, pin, JSON.stringify(children), userId]);
+      SET email = $1, password = $2, pin = $3, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $4
+      RETURNING id, email, pin
+    `, [email, password, pin, userId]);
     
     // If no rows updated, create new record
     if (result.rows.length === 0) {
       result = await db.query(`
-        INSERT INTO parent (id, email, password, pin, children)
-        VALUES ($5, $1, $2, $3, $4)
-        RETURNING id, email, pin, children
-      `, [email, password, pin, JSON.stringify(children), userId]);
+        INSERT INTO parent (id, email, password, pin)
+        VALUES ($4, $1, $2, $3)
+        RETURNING id, email, pin
+      `, [email, password, pin, userId]);
     }
     
     return result.rows[0];
@@ -69,5 +69,14 @@ export const UserModel = {
       results.push(result.rows[0]);
     }
     return results;
+  },
+
+  async createPaymentMethod({ userId, cardNumber, expiryDate, cvv, cardholderName, billingAddress }) {
+    const result = await db.query(`
+      INSERT INTO payment_methods (user_id, card_number, expiry_date, cvv, cardholder_name, billing_address)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, user_id, card_number, expiry_date, cvv, cardholder_name, billing_address, is_default, created_at
+    `, [userId, cardNumber, expiryDate, cvv, cardholderName, billingAddress]);
+    return result.rows[0];
   }
 };

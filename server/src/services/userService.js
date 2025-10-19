@@ -57,20 +57,40 @@ export const UserService = {
         const { email, password, pin, children } = familyData;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         
-        console.log('About to call upsertParentInfo with:', { userId, email, pin, children });
-        
-        // Update parent information including children as JSON array
+        // Update parent information
         const updatedParent = await UserModel.upsertParentInfo({ 
             userId: parseInt(userId), // Convert to number
             email, 
             password: hashedPassword, 
-            pin,
-            children: children || [] // Save children as JSON array
+            pin
         });
         
         console.log('upsertParentInfo result:', updatedParent);
         
-        return { parent: updatedParent, children: children || [] };
+        // Create individual child records
+        let createdChildren = [];
+        if (children && children.length > 0) {
+            console.log('Creating children:', children);
+            createdChildren = await UserModel.createChildren({ children, parentId: parseInt(userId) });
+            console.log('Created children:', createdChildren);
+        }
+        
+        return { parent: updatedParent, children: createdChildren };
+    },
+
+    async savePaymentMethod(userId, paymentData) {
+        const { cardNumber, expiryDate, cvv, cardholderName, billingAddress } = paymentData;
+        
+        // For now, we'll store the data as-is. In production, you'd want to encrypt sensitive data
+        const paymentMethod = await UserModel.createPaymentMethod({
+            userId: parseInt(userId),
+            cardNumber,
+            expiryDate,
+            cvv,
+            cardholderName,
+            billingAddress
+        });
+        return paymentMethod;
     }
 }
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import axios, { AxiosError } from 'axios';
+import { IP_ADDRESS, PORT } from '@env';
 
 const PaymentTest = () => {
   const [jwtToken, setJwtToken] = useState('');
@@ -8,7 +9,7 @@ const PaymentTest = () => {
   const [password, setPassword] = useState('');
   const [transactionId, setTransactionId] = useState('');
 
-  const API_BASE_URL = 'http://localhost:3000'; // Change to your server URL
+  const API_BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
 
   const login = async () => {
     try {

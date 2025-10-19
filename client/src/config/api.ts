@@ -1,4 +1,6 @@
 // API Configuration
+import { IP_ADDRESS, PORT } from '@env';
+
 const API_CONFIG = {
   // For Android emulator
   ANDROID_BASE_URL: 'http://10.0.2.2:3000',
@@ -6,8 +8,8 @@ const API_CONFIG = {
   // For iOS simulator
   IOS_BASE_URL: 'http://localhost:3000',
   
-  // For physical device (replace with your computer's IP)
-  DEVICE_BASE_URL: 'http://10.2.90.74:3000', // Your actual IP
+  // For physical device (using env variables)
+  DEVICE_BASE_URL: `http://${IP_ADDRESS}:${PORT}`,
   
   // For web
   WEB_BASE_URL: 'http://localhost:3000'

@@ -17,6 +17,7 @@ import TaskDetailScreen from './screens/TaskDetailScreen';
 import SelectChild from './screens/SelectChild';
 import ChildOverview from './screens/ChildOverview';
 import AddTask from './screens/AddTask';
+import ApproveTasks from './screens/ApproveTasks';
 import { TaskProvider } from './context/TaskContext';
 
 type RootStackParamList = {
@@ -31,7 +32,8 @@ type RootStackParamList = {
   SelectChild: undefined;
   ChildOverview: { child: any };
   AddTask: { child: any };
-  ChildTaskDashboard: undefined;
+  ApproveTasks: { child: any };
+  ChildTaskDashboard: { child: any };
   TaskDetail: { task: any };
 };
 
@@ -88,6 +90,8 @@ export default function App() {
             <Stack.Screen name="ChildOverview" component={ChildOverview}
             options={{ headerShown: false }}/>
             <Stack.Screen name="AddTask" component={AddTask}
+            options={{ headerShown: false }}/>
+            <Stack.Screen name="ApproveTasks" component={ApproveTasks}
             options={{ headerShown: false }}/>
             <Stack.Screen name="ChildTaskDashboard" component={ChildTaskDashboard}
             options={{ headerShown: false }}/>

@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+import { IP_ADDRESS, PORT } from '@env';
+
+const API_BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
 
 interface PaymentMethod {
   id: number;

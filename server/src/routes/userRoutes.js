@@ -13,4 +13,7 @@ router.post('/refresh-token', UserController.refreshToken);
 router.put('/token-config', UserController.updateTokenConfig);
 router.put('/family-setup', UserController.saveFamilySetup);
 router.post('/payment-method', UserController.savePaymentMethod);
+router.post('/validate-pin', UserController.validatePin);
+router.get('/family/:userId', UserController.getFamilyData);
+router.put('/child-gems', UserController.updateChildGems);
 export default router;

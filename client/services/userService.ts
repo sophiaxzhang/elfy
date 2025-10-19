@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { storeToken, getToken, storeRefreshToken, getRefreshToken, clearTokens } from './authService';
+import { IP_ADDRESS, PORT } from '@env';
 
-const API_BASE_URL = 'http://localhost:3000'; // Replace with your backend URL
+const API_BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
 
 // Create axios instance with interceptors
 const api = axios.create({
@@ -62,6 +63,7 @@ export interface User {
   name: string;
   email: string;
   pin: number;
+  number_of_tokens?: number;
 }
 
 export interface Child {
@@ -153,8 +155,13 @@ export const UserService = {
       const token = await getToken();
       if (!token) return null;
       
-      const response = await api.get('/api/parent/1'); // You'll need to get actual user ID
-      return response.data;
+      // Decode the JWT token to get user ID
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.userId;
+      
+      // Use the family data endpoint to get current user info
+      const response = await api.get(`/user/family/${userId}`);
+      return response.data.family.parent;
     } catch (error) {
       console.error('Get current user error:', error);
       return null;
@@ -199,6 +206,36 @@ export const UserService = {
       return response.data;
     } catch (error: any) {
       console.error('Update child error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  async validatePin(userId: number, pin: string): Promise<boolean> {
+    try {
+      const response = await api.post('/user/validate-pin', { userId, pin });
+      return response.data.isValid;
+    } catch (error: any) {
+      console.error('Validate PIN error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  async getFamilyData(userId: number): Promise<{ parent: User; children: Child[] }> {
+    try {
+      const response = await api.get(`/user/family/${userId}`);
+      return response.data.family;
+    } catch (error: any) {
+      console.error('Get family data error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  async updateChildGems(childId: number, gemsToAdd: number): Promise<any> {
+    try {
+      const response = await api.put('/user/child-gems', { childId, gemsToAdd });
+      return response.data;
+    } catch (error: any) {
+      console.error('Update child gems error:', error.response?.data || error.message);
       throw error;
     }
   }

@@ -11,10 +11,10 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { IP_ADDRESS, PORT } from '@env';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { IP_ADDRESS, PORT } from '@env';
 
 type RootStackParamList = {
   PaymentSetup: undefined;
@@ -38,7 +38,11 @@ interface Child {
 
 const FamilySetupScreen: React.FC = () => {
   const navigation = useNavigation<FamilySetupScreenNavigationProp>();
-  const { user, setUser } = useAuth() as { user: { id: number }, setUser: (user: any) => void };
+  const auth = useAuth();
+  if (!auth) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  const { user, setUser } = auth;
   const [formData, setFormData] = useState<FamilySetupFormData>({
     name: '',
     email: '',
@@ -119,7 +123,7 @@ const FamilySetupScreen: React.FC = () => {
     setIsLoading(true);
     try {
       // Create new user first
-      const createUserResponse = await fetch(`http://10.2.90.74:3000/user/`, {
+      const createUserResponse = await fetch(`http://${IP_ADDRESS}:${PORT}/user/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -140,7 +144,7 @@ const FamilySetupScreen: React.FC = () => {
       const userData = await createUserResponse.json();
       
       // Now save family setup with the new user ID
-      const response = await fetch(`http://10.2.90.74:3000/user/family-setup`, {
+      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/family-setup`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -178,10 +182,11 @@ const FamilySetupScreen: React.FC = () => {
       );
     } catch (error) {
       console.error('Family setup error:', error);
-      console.error('Error details:', error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error details:', errorMessage);
       Alert.alert(
         'Setup Failed',
-        `An error occurred during family setup: ${error.message}`
+        `An error occurred during family setup: ${errorMessage}`
       );
     } finally {
       setIsLoading(false);
@@ -460,12 +465,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   nextButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#DC2626',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#3B82F6',
+    shadowColor: '#DC2626',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -495,7 +500,7 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     fontSize: 16,
-    color: '#3B82F6',
+    color: '#059669',
     fontWeight: '600',
   },
 });

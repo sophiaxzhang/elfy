@@ -9,8 +9,8 @@ export const MockVisaService = {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Simulate success/failure randomly
-    const success = Math.random() > 0.3; // 70% success rate
+    // Always return success for testing
+    const success = true; // 100% success rate for testing
     
     if (success) {
       console.log('✅ Mock payout successful!');

@@ -3,6 +3,10 @@ import OpenAI from 'openai';
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY);
+
+// Log the base URL that the SDK will use
+console.log('OpenAI SDK base URL:', openai.baseURL || 'https://api.openai.com/v1');
 
 export const AITaskSuggestionService = {
   async generateTaskSuggestions({ childAge, childName, context = 'general' }) {

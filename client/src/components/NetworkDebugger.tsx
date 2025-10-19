@@ -49,7 +49,7 @@ const NetworkDebugger: React.FC = () => {
     const testUrls = [
       { url: 'http://localhost:3000', name: 'Localhost' },
       { url: 'http://10.0.2.2:3000', name: 'Android Emulator' },
-      { url: 'http://100.110.184.54:3000', name: 'Device IP (old)' },
+      { url: 'http://${IP_ADDRESS}:${PORT}', name: 'Device IP (old)' },
       { url: 'http://10.2.90.74:3000', name: 'Device IP (new)' },
     ];
 

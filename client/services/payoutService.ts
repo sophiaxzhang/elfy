@@ -1,6 +1,6 @@
 import { IP_ADDRESS, PORT } from '@env';
 
-const API_BASE_URL = `http://100.110.184.54:3000`;
+const API_BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
 
 interface PaymentMethod {
   id: number;

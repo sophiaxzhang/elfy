@@ -30,7 +30,8 @@ interface LoginFormData {
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { login } = useAuth();
+  const auth = useAuth();
+  const login = auth?.login;
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -73,6 +74,10 @@ const LoginScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
+      if (!login) {
+        Alert.alert('Error', 'Authentication service not available');
+        return;
+      }
       await login(formData.email.trim(), formData.password);
       Alert.alert(
         'Welcome Back!',

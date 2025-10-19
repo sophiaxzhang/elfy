@@ -32,7 +32,8 @@ interface SignupFormData {
 
 const SignupScreen: React.FC = () => {
   const navigation = useNavigation<SignupScreenNavigationProp>();
-  const { register } = useAuth();
+  const auth = useAuth();
+  const register = auth?.register;
   const [formData, setFormData] = useState<SignupFormData>({
     name: '',
     email: '',
@@ -93,7 +94,11 @@ const SignupScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await register(formData.name.trim(), formData.email.trim(), formData.password);
+      if (!register) {
+        Alert.alert('Error', 'Authentication service not available');
+        return;
+      }
+      await register(formData.name.trim(), formData.email.trim(), formData.password, 1234); // Default PIN
       Alert.alert(
         'Success!',
         'Your account has been created successfully.',

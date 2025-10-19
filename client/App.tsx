@@ -12,6 +12,7 @@ import DashboardScreen from './screens/DashboardScreen';
 import FamilySetupScreen from './screens/FamilySetupScreen';
 import PaymentSetupScreen from './screens/PaymentSetupScreen';
 import TokenConfigScreen from './screens/TokenConfigScreen';
+import ARElfScreen from './screens/ARElfScreen';
 import ChildTaskDashboard from './screens/ChildTaskDashboard';
 import TaskDetailScreen from './screens/TaskDetailScreen';
 import SelectChild from './screens/SelectChild';
@@ -28,6 +29,7 @@ type RootStackParamList = {
   FamilySetup: undefined;
   PaymentSetup: undefined;
   TokenConfig: undefined;
+  ARElf: undefined;
   SelectChild: undefined;
   ChildOverview: { child: any };
   AddTask: { child: any };
@@ -83,6 +85,8 @@ export default function App() {
             <Stack.Screen name="TokenConfig" component={TokenConfigScreen}
             options={{ headerShown: false }} />
             <Stack.Screen name="Dashboard" component={DashboardScreen}/>
+            <Stack.Screen name="ARElf" component={ARElfScreen}
+            options={{ headerShown: false }} />
             <Stack.Screen name="SelectChild" component={SelectChild}
             options={{ headerShown: false }}/>
             <Stack.Screen name="ChildOverview" component={ChildOverview}

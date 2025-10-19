@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "e40d3483-7c1b-4800-93af-96b43f9488fc"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.sophxz.elfly",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

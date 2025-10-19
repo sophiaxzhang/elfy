@@ -119,6 +119,8 @@ const ChildProgressBar: React.FC<ChildProgressBarProps> = ({
             [{ text: 'Awesome!' }]
           );
           onPayoutTriggered?.();
+          // Reset payout flag to allow multiple redemptions
+          setHasTriggeredPayout(false);
         } else {
           // Reset the payout flag so user can try again
           setHasTriggeredPayout(false);
@@ -297,7 +299,7 @@ const ChildProgressBar: React.FC<ChildProgressBarProps> = ({
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{goalGems - totalEarnedGems}</Text>
+          <Text style={styles.statNumber}>{Math.max(goalGems - totalEarnedGems, 0)}</Text>
           <Text style={styles.statLabel}>Gems Needed</Text>
         </View>
         <View style={styles.statDivider} />

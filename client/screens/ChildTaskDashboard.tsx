@@ -8,6 +8,8 @@ import {
   Dimensions,
   Alert,
   ActivityIndicator,
+  Modal,
+  Linking,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -21,6 +23,7 @@ import { Child } from '../types/childTypes';
 type RootStackParamList = {
   ChildTaskDashboard: { child: Child };
   TaskDetail: { task: Task; child: Child };
+  Dashboard: undefined;
   Start: undefined;
 };
 
@@ -43,10 +46,26 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [parentTokens, setParentTokens] = useState<number>(100);
+  const [earnedGemsOverride, setEarnedGemsOverride] = useState<number | undefined>(undefined);
+  const [giftCards, setGiftCards] = useState<any[]>([]);
+  const [giftCardModalVisible, setGiftCardModalVisible] = useState(false);
 
   useEffect(() => {
     loadTasks();
     loadParentTokens();
+    
+    // Initialize with some mock gift cards
+    const initialGiftCards = [
+      {
+        id: '1',
+        code: 'AMAZON-ABC12345',
+        amount: 10,
+        brand: 'Amazon',
+        claimUrl: 'https://www.amazon.com/gift-cards',
+        date: '2024-01-15'
+      }
+    ];
+    setGiftCards(initialGiftCards);
   }, [child.id]);
 
   const loadParentTokens = async () => {
@@ -103,7 +122,24 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
   };
 
   const handleBackPress = () => {
-    navigation.goBack();
+    navigation.navigate('Dashboard');
+  };
+
+  const handleGiftCardPress = () => {
+    // Show current gift cards (including any added from payouts)
+    setGiftCardModalVisible(true);
+  };
+
+  const handleGiftCardRedeem = async (giftCard: any) => {
+    if (giftCard.claimUrl) {
+      try {
+        await Linking.openURL(giftCard.claimUrl);
+      } catch (error) {
+        Alert.alert('Error', 'Could not open gift card link');
+      }
+    } else {
+      Alert.alert('Gift Card Code', giftCard.code);
+    }
   };
 
   const getStatusText = (status: TaskStatus): string => {
@@ -125,6 +161,11 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+              <Text style={styles.backButtonText}>← Dashboard</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.headerContent}>
             <Text style={styles.title}>{child.name}'s Tasks</Text>
             <Text style={styles.subtitle}>Loading tasks...</Text>
@@ -177,6 +218,11 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <Text style={styles.backButtonText}>← Dashboard</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.headerContent}>
           <Text style={styles.title}>{child.name}'s Tasks</Text>
           <Text style={styles.subtitle}>Complete your tasks to earn rewards!</Text>
@@ -187,14 +233,55 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
           <ChildProgressBar 
             tasks={tasks} 
             goalGems={parentTokens} // Use parent's number_of_tokens as goal
+            earnedGems={earnedGemsOverride}
             childId={child.id.toString()} // Convert to string for PayoutService
             parentId={user?.id?.toString() || "1"} // Convert to string for PayoutService
             payoutAmount={10} // Mock payout amount
-            onPayoutTriggered={() => {
-              // Reset tasks or update UI after payout
-              console.log('Payout triggered!');
+            onPayoutTriggered={async () => {
+              // Subtract gems locally after successful redeem
+              const currentEarned = tasks
+                .filter(t => t.status === 3)
+                .reduce((sum, t) => sum + t.gems, 0);
+              const current = typeof earnedGemsOverride === 'number' ? earnedGemsOverride : currentEarned;
+              const gemsToSubtract = parentTokens;
+              const updated = Math.max(0, current - gemsToSubtract);
+              setEarnedGemsOverride(updated);
+              
+              // Add a $10 Amazon gift card to the gift cards list
+              const newGiftCard = {
+                id: `giftcard_${Date.now()}`,
+                code: `AMAZON-${Math.random().toString(36).substr(2, 8).toUpperCase()}`,
+                amount: 10,
+                brand: 'Amazon',
+                claimUrl: 'https://www.amazon.com/gift-cards',
+                date: new Date().toISOString().split('T')[0]
+              };
+              setGiftCards(prev => [newGiftCard, ...prev]);
+              console.log('Payout triggered! Added gift card:', newGiftCard);
+              
+              // Save gem reduction to database
+              try {
+                await UserService.updateChildGems(parseInt(child.id), -gemsToSubtract);
+                console.log('Gems saved to database:', { childId: child.id, gemsSubtracted: gemsToSubtract });
+              } catch (error) {
+                console.error('Failed to save gems to database:', error);
+                // Revert the local change if database save fails
+                setEarnedGemsOverride(current);
+              }
+              
+              console.log('Payout triggered! Gems updated:', { current, goal: parentTokens, updated });
             }}
           />
+
+          {/* Gift Cards Button */}
+          <View style={styles.giftCardContainer}>
+            <TouchableOpacity 
+              style={styles.giftCardButton} 
+              onPress={handleGiftCardPress}
+            >
+              <Text style={styles.giftCardButtonText}>🎁 View Gift Cards</Text>
+            </TouchableOpacity>
+          </View>
       
       <ScrollView
         style={styles.scrollContainer}
@@ -205,6 +292,51 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
           <Column key={column.id} column={column} />
         ))}
       </ScrollView>
+
+      {/* Gift Card Modal */}
+      <Modal
+        visible={giftCardModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setGiftCardModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>🎁 Your Gift Cards</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setGiftCardModalVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView style={styles.giftCardList}>
+              {giftCards.length === 0 ? (
+                <Text style={styles.noGiftCardsText}>No gift cards yet. Complete tasks to earn rewards!</Text>
+              ) : (
+                giftCards.map((giftCard) => (
+                  <View key={giftCard.id} style={styles.giftCardItem}>
+                    <View style={styles.giftCardInfo}>
+                      <Text style={styles.giftCardBrand}>{giftCard.brand}</Text>
+                      <Text style={styles.giftCardAmount}>${giftCard.amount}</Text>
+                      <Text style={styles.giftCardCode}>Code: {giftCard.code}</Text>
+                      <Text style={styles.giftCardDate}>Earned: {giftCard.date}</Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.redeemButton}
+                      onPress={() => handleGiftCardRedeem(giftCard)}
+                    >
+                      <Text style={styles.redeemButtonText}>Redeem</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -218,14 +350,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 16,
+  },
+  backButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  backButtonText: {
+    fontSize: 14,
+    color: '#475569',
+    fontWeight: '600',
   },
   headerContent: {
     alignItems: 'center',
@@ -335,6 +483,124 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#6B7280',
+  },
+  // Gift Card Styles
+  giftCardContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  giftCardButton: {
+    backgroundColor: '#8B5CF6', // Purple color for gift cards
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    shadowColor: '#8B5CF6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  giftCardButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    width: '90%',
+    maxHeight: '80%',
+    padding: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: '#6B7280',
+    fontWeight: 'bold',
+  },
+  giftCardList: {
+    maxHeight: 400,
+  },
+  noGiftCardsText: {
+    textAlign: 'center',
+    color: '#6B7280',
+    fontSize: 16,
+    fontStyle: 'italic',
+    paddingVertical: 40,
+  },
+  giftCardItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  giftCardInfo: {
+    flex: 1,
+  },
+  giftCardBrand: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  giftCardAmount: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#059669',
+    marginBottom: 4,
+  },
+  giftCardCode: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontFamily: 'monospace',
+    marginBottom: 2,
+  },
+  giftCardDate: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  redeemButton: {
+    backgroundColor: '#059669',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  redeemButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

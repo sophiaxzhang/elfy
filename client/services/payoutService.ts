@@ -24,7 +24,7 @@ export const PayoutService = {
         tokenLength: token.length
       });
       
-      const response = await fetch(`${API_BASE_URL}/api/trigger-payout`, {
+      const response = await fetch(`${API_BASE_URL}/test-visa`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

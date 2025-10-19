@@ -1,5 +1,5 @@
 import db from '../config/db.js';
-import { VisaService } from '../services/visaService.js';
+import { MockVisaService } from '../services/mockVisaService.js';
 
 export const PayoutController = {
   async triggerPayout(req, res) {
@@ -13,11 +13,10 @@ export const PayoutController = {
         });
       }
       
-      // Fetch parent, child, and payment method information
-      const [parentResult, childResult, paymentMethodResult] = await Promise.all([
+      // Fetch parent and child information (skip payment method query for MVP)
+      const [parentResult, childResult] = await Promise.all([
         db.query('SELECT * FROM parent WHERE id = $1', [parentId]),
-        db.query('SELECT * FROM child WHERE id = $1', [childId]),
-        db.query('SELECT * FROM payment_methods WHERE user_id = $1 AND is_default = true LIMIT 1', [parentId])
+        db.query('SELECT * FROM child WHERE id = $1', [childId])
       ]);
       
       if (parentResult.rows.length === 0) {
@@ -28,21 +27,26 @@ export const PayoutController = {
         return res.status(404).json({ error: 'Child not found' });
       }
       
-      if (paymentMethodResult.rows.length === 0) {
-        return res.status(400).json({ error: 'No default payment method found for parent' });
-      }
-      
       const parent = parentResult.rows[0];
       const child = childResult.rows[0];
-      const paymentMethod = paymentMethodResult.rows[0];
       
-      // Prepare parent info with payment method for Visa API
+      // For MVP: Always use mock payment data for Visa processing
+      // (Even though we collect real payment data during signup, we don't use it for processing)
+      console.log('🎯 MVP Mode: Using mock payment data for Visa processing');
+      const mockPaymentMethod = {
+        card_number: '4111111111111111',
+        expiry_date: '1225',
+        cardholder_name: parent.name,
+        billing_address: '123 Mock Street, Mock City, MC 12345'
+      };
+      
+      // Prepare parent info with mock payment method for Visa API
       const parentWithPayment = {
         ...parent,
-        cardNumber: paymentMethod.card_number,
-        cardExpiryDate: paymentMethod.expiry_date,
-        cardholderName: paymentMethod.cardholder_name,
-        billingAddress: paymentMethod.billing_address
+        cardNumber: mockPaymentMethod.card_number,
+        cardExpiryDate: mockPaymentMethod.expiry_date,
+        cardholderName: mockPaymentMethod.cardholder_name,
+        billingAddress: mockPaymentMethod.billing_address
       };
       
           // Check if child has reached their goal (using existing gem field)
@@ -54,23 +58,11 @@ export const PayoutController = {
             });
           }
       
-      // Process payout through Visa Direct
-      const payoutResult = await VisaService.processPayout(parentWithPayment, amount);
+      // Process payout through Mock Visa Direct (for testing)
+      const payoutResult = await MockVisaService.processPayout(parentWithPayment, amount);
       
-      // Log the transaction in your existing payments table
-      await db.query(
-        `INSERT INTO payments (user_id, transaction_id, amount, currency, status, payment_type, created_at) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [
-          parentId,
-          payoutResult.transactionId,
-          amount,
-          'USD',
-          payoutResult.success ? 'completed' : 'failed',
-          'visa_direct',
-          new Date().toISOString()
-        ]
-      );
+      // For MVP: Skip database logging to avoid payments table dependency
+      console.log('🎉 Mock payout result:', payoutResult);
       
       // Reset child's gems if payout was successful
       if (payoutResult.success) {
@@ -78,6 +70,7 @@ export const PayoutController = {
           'UPDATE child SET gem = 0 WHERE id = $1',
           [childId]
         );
+        console.log('✅ Child gems reset to 0');
       }
       
       res.json({
@@ -90,26 +83,8 @@ export const PayoutController = {
     } catch (error) {
       console.error('Error processing payout:', error);
       
-      // Log error transaction
-      if (req.body.parentId && req.body.childId && req.body.amount) {
-        try {
-          await db.query(
-            `INSERT INTO payments (user_id, transaction_id, amount, currency, status, payment_type, created_at) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [
-              req.body.parentId,
-              'TXN' + Date.now() + Math.random().toString(36).substr(2, 9),
-              req.body.amount,
-              'USD',
-              'error',
-              'visa_direct',
-              new Date().toISOString()
-            ]
-          );
-        } catch (logError) {
-          console.error('Error logging failed transaction:', logError);
-        }
-      }
+      // For MVP: Skip database error logging
+      console.log('❌ Payout failed:', error.message);
       
       res.status(500).json({ 
         error: 'Internal server error',
@@ -121,16 +96,23 @@ export const PayoutController = {
   async getTransactionHistory(req, res) {
     try {
       const { parentId } = req.params;
-      const result = await db.query(
-        `SELECT p.*, c.name as child_name 
-         FROM payments p 
-         LEFT JOIN child c ON p.user_id = c.parent_id 
-         WHERE p.user_id = $1 
-         ORDER BY p.created_at DESC`,
-        [parentId]
-      );
       
-      res.json(result.rows);
+      // For MVP: Return mock transaction history
+      const mockTransactions = [
+        {
+          id: 1,
+          user_id: parentId,
+          transaction_id: 'MOCK' + Date.now(),
+          amount: 10.00,
+          currency: 'USD',
+          status: 'completed',
+          payment_type: 'visa_direct',
+          created_at: new Date().toISOString(),
+          child_name: 'Sample Child'
+        }
+      ];
+      
+      res.json(mockTransactions);
     } catch (error) {
       console.error('Error fetching transactions:', error);
       res.status(500).json({ error: 'Internal server error' });

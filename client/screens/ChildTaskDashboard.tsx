@@ -187,8 +187,8 @@ const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
           <ChildProgressBar 
             tasks={tasks} 
             goalGems={parentTokens} // Use parent's number_of_tokens as goal
-            childId={child.id} // Use actual child ID
-            parentId={user?.id?.toString() || "1"} // Use actual parent ID
+            childId={child.id.toString()} // Convert to string for PayoutService
+            parentId={user?.id?.toString() || "1"} // Convert to string for PayoutService
             payoutAmount={10} // Mock payout amount
             onPayoutTriggered={() => {
               // Reset tasks or update UI after payout

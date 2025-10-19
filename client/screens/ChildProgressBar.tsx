@@ -87,12 +87,21 @@ const ChildProgressBar: React.FC<ChildProgressBarProps> = ({
         return;
       }
       
+      console.log('🎁 Starting payout process...', {
+        parentId,
+        childId,
+        payoutAmount,
+        user: user.id
+      });
+      
       try {
         const token = await getToken();
         if (!token) {
           Alert.alert('Authentication Error', 'Please log in again.');
           return;
         }
+        
+        console.log('🔑 Got token, calling PayoutService...');
         
         const result = await PayoutService.triggerPayout(
           parentId!,
@@ -101,25 +110,31 @@ const ChildProgressBar: React.FC<ChildProgressBarProps> = ({
           token
         );
         
+        console.log('💰 Payout result:', result);
+        
         if (result.success) {
           Alert.alert(
             '🎉 Prize Redeemed Successfully!',
             `$${payoutAmount} has been transferred to your account. Transaction ID: ${result.transactionId}`,
             [{ text: 'Awesome!' }]
           );
+          onPayoutTriggered?.();
         } else {
+          // Reset the payout flag so user can try again
+          setHasTriggeredPayout(false);
           Alert.alert(
             'Redeem Failed',
             result.message || 'Please try again later.',
             [{ text: 'OK' }]
           );
         }
-        
-        onPayoutTriggered?.();
       } catch (error) {
+        console.error('💥 Payout error:', error);
+        // Reset the payout flag so user can try again
+        setHasTriggeredPayout(false);
         Alert.alert(
           'Redeem Error',
-          'Failed to process prize redemption. Please try again later.',
+          `Failed to process prize redemption: ${error.message || 'Unknown error'}`,
           [{ text: 'OK' }]
         );
       }

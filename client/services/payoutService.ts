@@ -17,6 +17,13 @@ interface PaymentMethod {
 export const PayoutService = {
   async triggerPayout(parentId: string, childId: string, amount: number, token: string) {
     try {
+      console.log('🚀 PayoutService.triggerPayout called with:', {
+        parentId,
+        childId,
+        amount,
+        tokenLength: token.length
+      });
+      
       const response = await fetch(`${API_BASE_URL}/api/trigger-payout`, {
         method: 'POST',
         headers: {
@@ -24,20 +31,25 @@ export const PayoutService = {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          parentId,
-          childId,
+          parentId: parseInt(parentId), // Convert to number for backend
+          childId: parseInt(childId),   // Convert to number for backend
           amount,
         }),
       });
 
+      console.log('📡 PayoutService response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ PayoutService error response:', errorData);
         throw new Error(errorData.message || 'Failed to trigger payout');
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('✅ PayoutService success result:', result);
+      return result;
     } catch (error) {
-      console.error('Payout service error:', error);
+      console.error('💥 Payout service error:', error);
       throw error;
     }
   },

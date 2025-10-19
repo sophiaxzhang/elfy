@@ -5,32 +5,128 @@ import {
   StyleSheet,
   Animated,
   Dimensions,
+  Alert,
+  TouchableOpacity,
 } from 'react-native';
 import { Task } from '../types/taskTypes';
+import { PayoutService } from '../services/payoutService';
+import { useAuth } from '../context/AuthContext';
+import { getToken } from '../services/authService';
 
 interface ChildProgressBarProps {
   tasks: Task[];
   goalGems: number; // Goal gems set by parent
   earnedGems?: number; // Optional override for earned gems count
+  childId?: string; // Child ID for payout
+  parentId?: string; // Parent ID for payout
+  payoutAmount?: number; // Amount to payout
+  onPayoutTriggered?: () => void; // Callback when payout is triggered
 }
 
 const ChildProgressBar: React.FC<ChildProgressBarProps> = ({ 
   tasks, 
   goalGems, 
-  earnedGems 
+  earnedGems,
+  childId,
+  parentId,
+  payoutAmount = 10,
+  onPayoutTriggered
 }) => {
+  const auth = useAuth();
+  const user = auth?.user;
   const [progress, setProgress] = useState(0);
+  const [hasTriggeredPayout, setHasTriggeredPayout] = useState(false);
   const animatedWidth = useRef(new Animated.Value(0)).current;
   const animatedRotation = useRef(new Animated.Value(0)).current;
   const animatedProgressScale = useRef(new Animated.Value(1)).current;
 
   // Calculate earned gems from completed tasks
+  // Using integer status: 3 = completed
   const calculatedEarnedGems = tasks
-    .filter(task => task.status === 'completed')
+    .filter(task => task.status === 3) // 3 = completed
     .reduce((total, task) => total + task.gems, 0);
   
   const totalEarnedGems = earnedGems ?? calculatedEarnedGems;
   const progressPercentage = Math.min((totalEarnedGems / goalGems) * 100, 100);
+  const hasReachedGoal = totalEarnedGems >= goalGems;
+
+  // Note: Removed automatic payout trigger - child must manually redeem prize
+  // useEffect(() => {
+  //   if (hasReachedGoal && !hasTriggeredPayout && childId && parentId) {
+  //     setHasTriggeredPayout(true);
+  //     triggerPayout();
+  //   }
+  // }, [hasReachedGoal, hasTriggeredPayout, childId, parentId]);
+
+  const handleRedeemPrize = () => {
+    if (hasTriggeredPayout) {
+      Alert.alert('Already Redeemed', 'You have already redeemed your prize!');
+      return;
+    }
+
+    Alert.alert(
+      '🎁 Redeem Your Prize!',
+      `You've earned ${totalEarnedGems} gems and reached your goal of ${goalGems} gems! You can now redeem your prize of $${payoutAmount}.`,
+      [
+        { text: 'Maybe Later', style: 'cancel' },
+        {
+          text: 'Redeem Now!',
+          onPress: () => {
+            setHasTriggeredPayout(true);
+            triggerPayout();
+          },
+        },
+      ]
+    );
+  };
+
+  const triggerPayout = async () => {
+    try {
+      if (!user) {
+        Alert.alert('Authentication Required', 'Please log in to process payouts.');
+        return;
+      }
+      
+      try {
+        const token = await getToken();
+        if (!token) {
+          Alert.alert('Authentication Error', 'Please log in again.');
+          return;
+        }
+        
+        const result = await PayoutService.triggerPayout(
+          parentId!,
+          childId!,
+          payoutAmount,
+          token
+        );
+        
+        if (result.success) {
+          Alert.alert(
+            '🎉 Prize Redeemed Successfully!',
+            `$${payoutAmount} has been transferred to your account. Transaction ID: ${result.transactionId}`,
+            [{ text: 'Awesome!' }]
+          );
+        } else {
+          Alert.alert(
+            'Redeem Failed',
+            result.message || 'Please try again later.',
+            [{ text: 'OK' }]
+          );
+        }
+        
+        onPayoutTriggered?.();
+      } catch (error) {
+        Alert.alert(
+          'Redeem Error',
+          'Failed to process prize redemption. Please try again later.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Payout trigger error:', error);
+    }
+  };
 
   useEffect(() => {
     setProgress(progressPercentage);
@@ -165,6 +261,15 @@ const ChildProgressBar: React.FC<ChildProgressBarProps> = ({
           <View style={styles.celebrationContainer}>
             <Text style={styles.celebrationText}>🎊 🎉 🎊</Text>
             <Text style={styles.celebrationMessage}>Congratulations!</Text>
+            <TouchableOpacity 
+              style={styles.redeemButton} 
+              onPress={handleRedeemPrize}
+              disabled={hasTriggeredPayout}
+            >
+              <Text style={styles.redeemButtonText}>
+                {hasTriggeredPayout ? '🎁 Prize Redeemed!' : '🎁 Redeem Prize'}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
@@ -285,7 +390,7 @@ const styles = StyleSheet.create({
   percentageText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#3B82F6',
+    color: '#DC2626',
   },
   rewardContainer: {
     alignItems: 'center',
@@ -314,6 +419,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#059669',
+  },
+  redeemButton: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 12,
+    shadowColor: '#F59E0B',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  redeemButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   statsContainer: {
     flexDirection: 'row',

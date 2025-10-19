@@ -131,5 +131,50 @@ export const UserController = {
             console.error("Error stack:", error.stack);
             res.status(500).send({message: "internal server error"});
         }
+    },
+
+    async validatePin(req, res) {
+        console.log("=== PIN VALIDATION REQUEST ===");
+        console.log("incoming pin validation body:", req.body);
+        try {
+            const { userId, pin } = req.body;
+            console.log("Extracted data:", { userId, pin, pinType: typeof pin });
+            const isValid = await UserService.validatePin(userId, pin);
+            console.log("PIN validation result:", isValid);
+            res.status(200).json({ success: true, isValid });
+        } catch (error) {
+            console.error("pin validation error:", error);
+            res.status(500).json({ message: "internal server error" });
+        }
+    },
+
+    async getFamilyData(req, res) {
+        console.log("=== GET FAMILY DATA REQUEST ===");
+        try {
+            const { userId } = req.params;
+            const familyData = await UserService.getFamilyData(userId);
+            res.status(200).json({ success: true, family: familyData });
+        } catch (error) {
+            console.error("get family data error:", error);
+            res.status(500).json({ message: "internal server error" });
+        }
+    },
+
+    async updateChildGems(req, res) {
+        console.log("=== UPDATE CHILD GEMS REQUEST ===");
+        try {
+            const { childId, gemsToAdd } = req.body;
+            console.log("Extracted data:", { childId, gemsToAdd });
+            
+            if (!childId || gemsToAdd === undefined) {
+                return res.status(400).json({ message: "Child ID and gems to add are required" });
+            }
+            
+            const updatedChild = await UserService.updateChildGems(childId, gemsToAdd);
+            res.status(200).json({ success: true, child: updatedChild });
+        } catch (error) {
+            console.error("update child gems error:", error);
+            res.status(500).json({ message: "internal server error" });
+        }
     }
 }

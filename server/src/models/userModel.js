@@ -1,10 +1,8 @@
 import db from '../config/db.js';
 
 export const UserModel = {
-  async findByEmail(email){
-    const result = await db.query('SELECT * FROM parent WHERE email = $1',
-    [email]
-  );
+  async findByEmail(email) {
+    const result = await db.query('SELECT * FROM parent WHERE email = $1', [email]);
     return result.rows[0];
   },
 
@@ -77,6 +75,29 @@ export const UserModel = {
       VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id, user_id, card_number, expiry_date, cvv, cardholder_name, billing_address, is_default, created_at
     `, [userId, cardNumber, expiryDate, cvv, cardholderName, billingAddress]);
+    return result.rows[0];
+  },
+
+  async findById(id) {
+    const result = await db.query('SELECT * FROM parent WHERE id = $1', [id]);
+    return result.rows[0];
+  },
+
+  async getChildrenByParentId(parentId) {
+    const result = await db.query('SELECT * FROM child WHERE parent_id = $1', [parentId]);
+    return result.rows;
+  },
+
+  async updateChildGems(childId, gemsToAdd) {
+    console.log('UserModel.updateChildGems called with:', { childId, gemsToAdd });
+    const result = await db.query(`
+      UPDATE child 
+      SET gem = gem + $1 
+      WHERE id = $2 
+      RETURNING *
+    `, [gemsToAdd, childId]);
+    
+    console.log('UserModel.updateChildGems result:', result.rows[0]);
     return result.rows[0];
   }
 };

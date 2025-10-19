@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,136 +7,103 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Task, TaskStatus, TaskColumn } from '../types/taskTypes';
+import { Task, TaskStatus, TaskColumn, STATUS_MAP } from '../types/taskTypes';
 import ChildProgressBar from './ChildProgressBar';
-import { useTaskContext } from '../context/TaskContext';
+import { TaskService } from '../services/taskService';
+import { UserService } from '../services/userService';
+import { useAuth } from '../context/AuthContext';
+import { Child } from '../types/childTypes';
 
 type RootStackParamList = {
-  TaskDetail: { task: Task };
+  ChildTaskDashboard: { child: Child };
+  TaskDetail: { task: Task; child: Child };
   Start: undefined;
 };
 
+type ChildTaskDashboardRouteProp = RouteProp<RootStackParamList, 'ChildTaskDashboard'>;
 type ChildTaskDashboardNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Start'>;
 
-// Mock data - this will be replaced with real data from your backend
-const mockTasks: Task[] = [
-  {
-    id: '1',
-    name: 'Clean Bedroom',
-    gems: 5,
-    room: 'Bedroom',
-    status: 'not_started',
-    description: 'Make bed, organize desk, vacuum floor',
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'Wash Dishes',
-    gems: 3,
-    room: 'Kitchen',
-    status: 'in_progress',
-    description: 'Wash all dishes in sink and put away',
-    createdAt: '2024-01-15T09:00:00Z',
-    updatedAt: '2024-01-15T11:30:00Z',
-  },
-  {
-    id: '3',
-    name: 'Take Out Trash',
-    gems: 2,
-    room: 'Kitchen',
-    status: 'waiting_approval',
-    description: 'Take all trash bags to outside bins',
-    createdAt: '2024-01-15T08:00:00Z',
-    updatedAt: '2024-01-15T12:00:00Z',
-  },
-  {
-    id: '4',
-    name: 'Vacuum Living Room',
-    gems: 4,
-    room: 'Living Room',
-    status: 'completed',
-    description: 'Vacuum entire living room area',
-    createdAt: '2024-01-14T14:00:00Z',
-    updatedAt: '2024-01-14T16:00:00Z',
-  },
-  {
-    id: '5',
-    name: 'Organize Bookshelf',
-    gems: 3,
-    room: 'Study',
-    status: 'completed',
-    description: 'Sort books by genre and alphabetically',
-    createdAt: '2024-01-13T10:00:00Z',
-    updatedAt: '2024-01-13T12:00:00Z',
-  },
-  {
-    id: '6',
-    name: 'Water Plants',
-    gems: 2,
-    room: 'Living Room',
-    status: 'not_started',
-    description: 'Water all indoor plants and check soil moisture',
-    createdAt: '2024-01-16T09:00:00Z',
-    updatedAt: '2024-01-16T09:00:00Z',
-  },
-  {
-    id: '7',
-    name: 'Fold Laundry',
-    gems: 4,
-    room: 'Bedroom',
-    status: 'not_started',
-    description: 'Fold and put away clean clothes',
-    createdAt: '2024-01-16T10:00:00Z',
-    updatedAt: '2024-01-16T10:00:00Z',
-  },
-];
+interface ChildTaskDashboardProps {
+  route: ChildTaskDashboardRouteProp;
+}
 
-const ChildTaskDashboard: React.FC = () => {
+const ChildTaskDashboard: React.FC<ChildTaskDashboardProps> = ({ route }) => {
   const navigation = useNavigation<ChildTaskDashboardNavigationProp>();
-  const { tasks, setTasks } = useTaskContext();
+  const { child } = route.params;
+  const auth = useAuth();
+  if (!auth) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  const { user } = auth;
 
-  // Initialize tasks if empty
-  React.useEffect(() => {
-    if (tasks.length === 0) {
-      setTasks(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [parentTokens, setParentTokens] = useState<number>(100);
+
+  useEffect(() => {
+    loadTasks();
+    loadParentTokens();
+  }, [child.id]);
+
+  const loadParentTokens = async () => {
+    try {
+      if (!user?.id) return;
+      const familyData = await UserService.getFamilyData(user.id);
+      setParentTokens(familyData.parent.number_of_tokens || 100);
+    } catch (error) {
+      console.error('Error loading parent tokens:', error);
     }
-  }, [tasks.length, setTasks]);
+  };
+
+  const loadTasks = async () => {
+    try {
+      setIsLoading(true);
+      const childTasks = await TaskService.getTasksByChild(parseInt(child.id));
+      setTasks(childTasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      Alert.alert('Error', 'Failed to load tasks');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const columns: TaskColumn[] = [
     {
       id: 'not_started',
       title: 'Not Started',
-      tasks: tasks.filter(task => task.status === 'not_started'),
+      tasks: tasks.filter(task => task.status === 0), // 0 = not_started
     },
     {
       id: 'in_progress',
       title: 'In Progress',
-      tasks: tasks.filter(task => task.status === 'in_progress'),
+      tasks: tasks.filter(task => task.status === 1), // 1 = in_progress
     },
     {
       id: 'waiting_approval',
       title: 'Waiting for Approval',
-      tasks: tasks.filter(task => task.status === 'waiting_approval'),
+      tasks: tasks.filter(task => task.status === 2), // 2 = waiting_approval
     },
     {
       id: 'completed',
       title: 'Completed',
-      tasks: tasks.filter(task => task.status === 'completed'),
+      tasks: tasks.filter(task => task.status === 3), // 3 = completed
     },
   ];
 
   const handleTaskPress = (task: Task) => {
     navigation.navigate('TaskDetail', { 
-      task
+      task,
+      child
     });
   };
 
   const handleBackPress = () => {
-    navigation.navigate('Start');
+    navigation.goBack();
   };
 
   const getStatusText = (status: TaskStatus): string => {
@@ -154,6 +121,23 @@ const ChildTaskDashboard: React.FC = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <Text style={styles.title}>{child.name}'s Tasks</Text>
+            <Text style={styles.subtitle}>Loading tasks...</Text>
+          </View>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#DC2626" />
+          <Text style={styles.loadingText}>Loading tasks...</Text>
+        </View>
+      </View>
+    );
+  }
+
 
   const TaskCard: React.FC<{ task: Task }> = ({ task }) => (
     <TouchableOpacity
@@ -162,7 +146,7 @@ const ChildTaskDashboard: React.FC = () => {
     >
       <Text style={styles.taskName}>{task.name}</Text>
       <Text style={styles.taskGems}>💎 {task.gems} gems</Text>
-      <Text style={styles.taskRoom}>{task.room}</Text>
+      <Text style={styles.taskRoom}>{task.location}</Text>
     </TouchableOpacity>
   );
 
@@ -194,16 +178,23 @@ const ChildTaskDashboard: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.title}>My Chores</Text>
+          <Text style={styles.title}>{child.name}'s Tasks</Text>
           <Text style={styles.subtitle}>Complete your tasks to earn rewards!</Text>
         </View>
       </View>
       
-      {/* Progress Bar */}
-      <ChildProgressBar 
-        tasks={tasks} 
-        goalGems={15} // Mock goal gems - this will come from backend
-      />
+          {/* Progress Bar */}
+          <ChildProgressBar 
+            tasks={tasks} 
+            goalGems={parentTokens} // Use parent's number_of_tokens as goal
+            childId={child.id} // Use actual child ID
+            parentId={user?.id?.toString() || "1"} // Use actual parent ID
+            payoutAmount={10} // Mock payout amount
+            onPayoutTriggered={() => {
+              // Reset tasks or update UI after payout
+              console.log('Payout triggered!');
+            }}
+          />
       
       <ScrollView
         style={styles.scrollContainer}
@@ -224,7 +215,7 @@ const taskCardWidth = width * 0.4;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     alignItems: 'center',
@@ -305,7 +296,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     width: taskCardWidth,
     borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: '#DC2626',
   },
   taskName: {
     fontSize: 16,
@@ -333,6 +324,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#94A3B8',
     fontStyle: 'italic',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
   },
 });
 

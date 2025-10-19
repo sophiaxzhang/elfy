@@ -11,10 +11,10 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { IP_ADDRESS, PORT } from '@env';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { IP_ADDRESS, PORT } from '@env';
 
 type RootStackParamList = {
   FamilySetup: undefined;
@@ -109,7 +109,7 @@ const PaymentSetupScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://10.2.90.74:3000/user/payment-method`, {
+      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/payment-method`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -248,7 +248,7 @@ const PaymentSetupScreen: React.FC = () => {
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -352,12 +352,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   nextButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#DC2626',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
     alignItems: 'center',
-    shadowColor: '#3B82F6',
+    shadowColor: '#DC2626',
     shadowOffset: {
       width: 0,
       height: 4,

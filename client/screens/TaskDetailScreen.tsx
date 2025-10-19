@@ -6,57 +6,79 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Task, TaskStatus } from '../types/taskTypes';
-import { useTaskContext } from '../context/TaskContext';
+import { Task, STATUS_MAP } from '../types/taskTypes';
+import { TaskService } from '../services/taskService';
+import { Child } from '../types/childTypes';
 
 type RootStackParamList = {
-  ChildTaskDashboard: undefined;
-  TaskDetail: { task: Task };
+  ChildTaskDashboard: { child: Child };
+  TaskDetail: { task: Task; child: Child };
   Start: undefined;
 };
 
 type TaskDetailRouteProp = RouteProp<RootStackParamList, 'TaskDetail'>;
-type TaskDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Start'>;
+type TaskDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ChildTaskDashboard'>;
 
 const TaskDetailScreen: React.FC = () => {
   const navigation = useNavigation<TaskDetailNavigationProp>();
   const route = useRoute<TaskDetailRouteProp>();
-  const { task } = route.params;
-  const { updateTask } = useTaskContext();
+  const { task, child } = route.params;
   
   const [currentTask, setCurrentTask] = useState<Task>(task);
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  const getStatusColor = (status: TaskStatus): string => {
+  const getStatusColor = (status: number): string => {
     switch (status) {
-      case 'not_started':
+      case 0: // not_started
         return '#6B7280';
-      case 'in_progress':
+      case 1: // in_progress
         return '#F59E0B';
-      case 'waiting_approval':
+      case 2: // waiting_approval
         return '#8B5CF6';
-      case 'completed':
+      case 3: // completed
         return '#10B981';
       default:
         return '#6B7280';
     }
   };
 
-  const getStatusText = (status: TaskStatus): string => {
+  const getStatusText = (status: number): string => {
     switch (status) {
-      case 'not_started':
+      case 0:
         return 'Not Started';
-      case 'in_progress':
+      case 1:
         return 'In Progress';
-      case 'waiting_approval':
+      case 2:
         return 'Waiting for Approval';
-      case 'completed':
+      case 3:
         return 'Completed';
       default:
         return 'Unknown';
+    }
+  };
+
+  const updateTaskStatus = async (newStatus: number) => {
+    try {
+      setIsUpdating(true);
+      
+      const updatedTask = await TaskService.updateTask(currentTask.id, {
+        status: newStatus,
+      });
+      
+      setCurrentTask(updatedTask);
+      
+      // Navigate back to ChildTaskDashboard
+      navigation.navigate('ChildTaskDashboard', { child });
+      
+    } catch (error) {
+      console.error('Error updating task:', error);
+      Alert.alert('Error', 'Failed to update task status. Please try again.');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -68,16 +90,7 @@ const TaskDetailScreen: React.FC = () => {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Start',
-          onPress: () => {
-            const updatedTask = {
-              ...currentTask,
-              status: 'in_progress' as TaskStatus,
-              updatedAt: new Date().toISOString(),
-            };
-            setCurrentTask(updatedTask);
-            updateTask(updatedTask);
-            Alert.alert('Task Started!', 'Good luck with your chore!');
-          },
+          onPress: () => updateTaskStatus(1), // 1 = in_progress
         },
       ]
     );
@@ -91,53 +104,46 @@ const TaskDetailScreen: React.FC = () => {
         { text: 'Not Yet', style: 'cancel' },
         {
           text: 'Complete',
-          onPress: () => {
-            const updatedTask = {
-              ...currentTask,
-              status: 'waiting_approval' as TaskStatus,
-              updatedAt: new Date().toISOString(),
-            };
-            setCurrentTask(updatedTask);
-            updateTask(updatedTask);
-            Alert.alert(
-              'Task Submitted!',
-              'Your task has been submitted for approval. Great job!'
-            );
-          },
+          onPress: () => updateTaskStatus(2), // 2 = waiting_approval
         },
       ]
     );
   };
 
   const handleBackPress = () => {
-    navigation.goBack();
-  };
-
-  const handleBackToStart = () => {
-    navigation.navigate('Start');
+    navigation.navigate('ChildTaskDashboard', { child });
   };
 
   const getActionButton = () => {
+    if (isUpdating) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#DC2626" />
+          <Text style={styles.loadingText}>Updating task...</Text>
+        </View>
+      );
+    }
+
     switch (currentTask.status) {
-      case 'not_started':
+      case 0: // not_started
         return (
           <TouchableOpacity style={styles.startButton} onPress={handleStartTask}>
             <Text style={styles.startButtonText}>Start Task</Text>
           </TouchableOpacity>
         );
-      case 'in_progress':
+      case 1: // in_progress
         return (
           <TouchableOpacity style={styles.completeButton} onPress={handleCompleteTask}>
             <Text style={styles.completeButtonText}>Complete Task</Text>
           </TouchableOpacity>
         );
-      case 'waiting_approval':
+      case 2: // waiting_approval
         return (
           <View style={styles.waitingContainer}>
             <Text style={styles.waitingText}>⏳ Waiting for parent approval</Text>
           </View>
         );
-      case 'completed':
+      case 3: // completed
         return (
           <View style={styles.completedContainer}>
             <Text style={styles.completedText}>✅ Task completed!</Text>
@@ -151,8 +157,8 @@ const TaskDetailScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBackToStart}>
-          <Text style={styles.backButtonText}>← Back to Start</Text>
+        <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Task Details</Text>
         <View style={styles.placeholder} />
@@ -175,21 +181,21 @@ const TaskDetailScreen: React.FC = () => {
             
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>🏠 Location:</Text>
-              <Text style={styles.infoValue}>{currentTask.room}</Text>
+              <Text style={styles.infoValue}>{currentTask.location}</Text>
             </View>
             
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>📅 Created:</Text>
               <Text style={styles.infoValue}>
-                {new Date(currentTask.createdAt).toLocaleDateString()}
+                {currentTask.createdAt ? new Date(currentTask.createdAt).toLocaleDateString() : 'Unknown'}
               </Text>
             </View>
           </View>
 
-          {currentTask.description && (
+          {currentTask.desc && (
             <View style={styles.descriptionContainer}>
               <Text style={styles.descriptionTitle}>📝 Instructions:</Text>
-              <Text style={styles.descriptionText}>{currentTask.description}</Text>
+              <Text style={styles.descriptionText}>{currentTask.desc}</Text>
             </View>
           )}
         </View>
@@ -215,7 +221,7 @@ const TaskDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -234,7 +240,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#3B82F6',
+    color: '#DC2626',
     fontWeight: '500',
   },
   headerTitle: {
@@ -327,11 +333,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   startButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#DC2626',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
-    shadowColor: '#3B82F6',
+    shadowColor: '#DC2626',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -389,6 +395,20 @@ const styles = StyleSheet.create({
     color: '#059669',
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    paddingVertical: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  loadingText: {
+    color: '#6B7280',
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 8,
   },
   tipsContainer: {
     backgroundColor: '#FFFFFF',

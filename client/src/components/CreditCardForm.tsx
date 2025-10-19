@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
 import axios from 'axios';
+import { IP_ADDRESS, PORT } from '@env';
 
 interface PaymentResponse {
   success: boolean;
@@ -30,7 +31,7 @@ const CreditCardForm = ({ onPaymentSuccess, onPaymentError }: CreditCardFormProp
   });
   const [loading, setLoading] = useState(false);
 
-  const API_BASE_URL = 'http://localhost:3000'; // Change to your server URL
+  const API_BASE_URL = `http://${IP_ADDRESS}:${PORT}`;
 
   const formatCardNumber = (text: string) => {
     // Remove all non-digits

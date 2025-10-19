@@ -91,6 +91,38 @@ export const UserService = {
             billingAddress
         });
         return paymentMethod;
+    },
+
+    async validatePin(userId, pin) {
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return false;
+        }
+        // Convert both to numbers for comparison since PIN is stored as integer
+        const userPin = parseInt(user.pin);
+        const inputPin = parseInt(pin);
+        console.log('PIN validation:', { userId, userPin, inputPin, match: userPin === inputPin });
+        return userPin === inputPin;
+    },
+
+    async getFamilyData(userId) {
+        // Get parent info
+        const parent = await UserModel.findById(userId);
+        if (!parent) {
+            throw new Error('Parent not found');
+        }
+
+        // Get children for this parent
+        const children = await UserModel.getChildrenByParentId(userId);
+        
+        return { parent, children };
+    },
+
+    async updateChildGems(childId, gemsToAdd) {
+        console.log('UserService.updateChildGems called with:', { childId, gemsToAdd });
+        const updatedChild = await UserModel.updateChildGems(childId, gemsToAdd);
+        console.log('UserService.updateChildGems result:', updatedChild);
+        return updatedChild;
     }
 }
 

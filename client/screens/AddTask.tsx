@@ -7,15 +7,18 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Child } from '../types/childTypes';
-import { Task } from '../types/taskTypes';
+import { Task, STATUS_TO_INT } from '../types/taskTypes';
+import { TaskService } from '../services/taskService';
+import { useAuth } from '../context/AuthContext';
 
 type RootStackParamList = {
   AddTask: { child: Child };
-  ChildOverview: undefined;
+  ChildOverview: { child: Child };
   Start: undefined;
 };
 
@@ -26,15 +29,21 @@ const AddTask: React.FC = () => {
   const navigation = useNavigation<AddTaskNavigationProp>();
   const route = useRoute<AddTaskRouteProp>();
   const { child } = route.params;
+  const auth = useAuth();
+  if (!auth) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  const { user } = auth;
 
   const [formData, setFormData] = useState({
     name: '',
     gems: '',
-    room: '',
+    location: '',
     description: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -49,8 +58,8 @@ const AddTask: React.FC = () => {
       newErrors.gems = 'Please enter a valid number of gems';
     }
 
-    if (!formData.room.trim()) {
-      newErrors.room = 'Room location is required';
+    if (!formData.location.trim()) {
+      newErrors.location = 'Room location is required';
     }
 
     setErrors(newErrors);
@@ -64,36 +73,53 @@ const AddTask: React.FC = () => {
     }
   };
 
-  const handleCreateTask = () => {
+  const handleCreateTask = async () => {
     if (!validateForm()) {
       return;
     }
 
-    const newTask: Task = {
-      id: Date.now().toString(),
-      name: formData.name.trim(),
-      gems: Number(formData.gems),
-      room: formData.room.trim(),
-      status: 'not_started',
-      description: formData.description.trim() || undefined,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    if (!user?.id) {
+      Alert.alert('Error', 'User not authenticated');
+      return;
+    }
 
-    Alert.alert(
-      'Task Created!',
-      `"${newTask.name}" has been added to ${child.name}'s task list.`,
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('ChildOverview'),
-        },
-      ]
-    );
+    try {
+      setIsSubmitting(true);
+
+      const taskData = {
+        name: formData.name.trim(),
+        gems: Number(formData.gems),
+        location: formData.location.trim(),
+        status: STATUS_TO_INT.not_started, // 0 for not started
+        desc: formData.description.trim() || undefined,
+        child_id: parseInt(child.id),
+        parent_id: user.id,
+      };
+
+      console.log('Creating task:', taskData);
+      const createdTask = await TaskService.createTask(taskData);
+      console.log('Task created successfully:', createdTask);
+
+      Alert.alert(
+        'Task Created!',
+        `"${taskData.name}" has been added to ${child.name}'s task list.`,
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('ChildOverview', { child }),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error creating task:', error);
+      Alert.alert('Error', 'Failed to create task. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBackPress = () => {
-    navigation.navigate('ChildOverview');
+    navigation.navigate('ChildOverview', { child });
   };
 
   const InputField: React.FC<{
@@ -113,11 +139,17 @@ const AddTask: React.FC = () => {
           multiline && styles.multilineInput,
           error && styles.inputError,
         ]}
-        value={value}
+        defaultValue={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
         multiline={multiline}
         keyboardType={keyboardType}
+        autoCorrect={false}
+        autoCapitalize="sentences"
+        returnKeyType="done"
+        blurOnSubmit={true}
+        textContentType="none"
+        autoComplete="off"
       />
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
@@ -127,7 +159,7 @@ const AddTask: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Add Task for {child.name}</Text>
         <View style={styles.placeholder} />
@@ -154,10 +186,10 @@ const AddTask: React.FC = () => {
 
           <InputField
             label="Room Location"
-            value={formData.room}
-            onChangeText={(text) => handleInputChange('room', text)}
+            value={formData.location}
+            onChangeText={(text) => handleInputChange('location', text)}
             placeholder="e.g., Bedroom, Kitchen, Living Room"
-            error={errors.room}
+            error={errors.location}
           />
 
           <InputField
@@ -179,7 +211,7 @@ const AddTask: React.FC = () => {
               💎 {formData.gems || '0'} gems
             </Text>
             <Text style={styles.previewRoom}>
-              🏠 {formData.room || 'Room Location'}
+              🏠 {formData.location || 'Room Location'}
             </Text>
             {formData.description && (
               <Text style={styles.previewDescription}>
@@ -189,8 +221,16 @@ const AddTask: React.FC = () => {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.createButton} onPress={handleCreateTask}>
-          <Text style={styles.createButtonText}>Create Task</Text>
+        <TouchableOpacity 
+          style={[styles.createButton, isSubmitting && styles.createButtonDisabled]} 
+          onPress={handleCreateTask}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.createButtonText}>Create Task</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -200,7 +240,7 @@ const AddTask: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -219,7 +259,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#3B82F6',
+    color: '#DC2626',
     fontWeight: '500',
   },
   headerTitle: {
@@ -283,7 +323,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
+    borderLeftColor: '#DC2626',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -328,6 +368,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+  },
+  createButtonDisabled: {
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   createButtonText: {
     color: '#FFFFFF',

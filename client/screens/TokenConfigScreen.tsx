@@ -11,10 +11,10 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { IP_ADDRESS, PORT } from '@env';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
-import { IP_ADDRESS, PORT } from '@env';
 
 type RootStackParamList = {
   PaymentSetup: undefined;
@@ -79,7 +79,7 @@ const TokenConfigScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`http://10.2.90.74:3000/user/token-config`, {
+      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/token-config`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ const TokenConfigScreen: React.FC = () => {
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

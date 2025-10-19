@@ -29,7 +29,7 @@ export const UserService = {
         if(!user){
             return null;
         }
-        const validPassword = await bcrypt.compare(password, user.hashed_password);
+        const validPassword = await bcrypt.compare(password, user.password);
         if(!validPassword){
             return null;
         }
@@ -40,6 +40,57 @@ export const UserService = {
             console.log("refresh token: " + refreshToken);
             return { accessToken: accessToken, refreshToken: refreshToken, user: user };
         }
+    },
+
+    async updateTokenConfig(userId, tokenConfig) {
+        const { numberOfTokens, giftCardAmount } = tokenConfig;
+        const updatedConfig = await UserModel.updateTokenConfig({ 
+            userId, 
+            numberOfTokens: parseInt(numberOfTokens), 
+            giftCardAmount: parseFloat(giftCardAmount) 
+        });
+        return updatedConfig;
+    },
+
+    async saveFamilySetup(userId, familyData) {
+        console.log('saveFamilySetup called with:', { userId, familyData });
+        const { email, password, pin, children } = familyData;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        
+        // Update parent information
+        const updatedParent = await UserModel.upsertParentInfo({ 
+            userId: parseInt(userId), // Convert to number
+            email, 
+            password: hashedPassword, 
+            pin
+        });
+        
+        console.log('upsertParentInfo result:', updatedParent);
+        
+        // Create individual child records
+        let createdChildren = [];
+        if (children && children.length > 0) {
+            console.log('Creating children:', children);
+            createdChildren = await UserModel.createChildren({ children, parentId: parseInt(userId) });
+            console.log('Created children:', createdChildren);
+        }
+        
+        return { parent: updatedParent, children: createdChildren };
+    },
+
+    async savePaymentMethod(userId, paymentData) {
+        const { cardNumber, expiryDate, cvv, cardholderName, billingAddress } = paymentData;
+        
+        // For now, we'll store the data as-is. In production, you'd want to encrypt sensitive data
+        const paymentMethod = await UserModel.createPaymentMethod({
+            userId: parseInt(userId),
+            cardNumber,
+            expiryDate,
+            cvv,
+            cardholderName,
+            billingAddress
+        });
+        return paymentMethod;
     }
 }
 

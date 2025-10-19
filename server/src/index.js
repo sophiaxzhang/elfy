@@ -14,6 +14,13 @@ app.use(express.json());
 app.use('/user', userRoutes);
 app.use('/chore', choreRoutes);
 
+// Test route
+app.get('/', (req, res) => {
+    res.json({ message: 'Server is running!', timestamp: new Date().toISOString() });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server listening on port ${PORT}`);
+    console.log(`Test the server at: http://localhost:${PORT}`);
+    console.log(`Test from phone at: http://10.2.90.74:${PORT}`);
 });

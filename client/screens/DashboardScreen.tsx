@@ -83,7 +83,28 @@ const styles = StyleSheet.create({
   familyMemberName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1F2937',
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 40,
+  },
+  taskButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    shadowColor: '#3B82F6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  taskButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
 

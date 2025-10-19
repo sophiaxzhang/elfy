@@ -123,7 +123,7 @@ const FamilySetupScreen: React.FC = () => {
     setIsLoading(true);
     try {
       // Create new user first
-      const createUserResponse = await fetch(`http://100.110.184.54:3000/user/`, {
+      const createUserResponse = await fetch(`http://${IP_ADDRESS}:${PORT}/user/`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ const FamilySetupScreen: React.FC = () => {
       const userData = await createUserResponse.json();
       
       // Now save family setup with the new user ID
-      const response = await fetch(`http://100.110.184.54:3000/user/family-setup`, {
+      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/family-setup`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

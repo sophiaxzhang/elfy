@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,19 +7,21 @@ import {
   ScrollView,
   Alert,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Child } from '../types/childTypes';
-import ChildProgressBar from './ChildProgressBar';
-import { useTaskContext } from '../context/TaskContext';
+import { TaskService } from '../services/taskService';
+import { UserService } from '../services/userService';
+import { useAuth } from '../context/AuthContext';
 
 type RootStackParamList = {
   ChildOverview: { child: Child };
   SelectChild: undefined;
   AddTask: { child: Child };
   ApproveTasks: { child: Child };
-  ChildTaskDashboard: undefined;
+  ChildTaskDashboard: { child: Child };
   Start: undefined;
 };
 
@@ -32,18 +34,56 @@ interface ChildOverviewProps {
 
 const ChildOverview: React.FC = () => {
   const navigation = useNavigation<ChildOverviewNavigationProp>();
-  const { tasks } = useTaskContext();
-  const [child, setChild] = useState<Child>({
-    id: '1',
-    name: 'Emma',
-    age: 8,
-    totalGemsEarned: 12,
-    currentGoal: 15,
-    completedTasks: 4,
-    totalTasks: 7,
-  });
+  const route = useRoute<ChildOverviewRouteProp>();
+  const auth = useAuth();
+  if (!auth) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  const { user } = auth;
+
+  const [child, setChild] = useState<Child>(route.params.child);
+  const [tasks, setTasks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState(child.currentGoal);
+
+  useEffect(() => {
+    loadChildData();
+  }, [child.id]);
+
+  const loadChildData = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch tasks for this child
+      const childTasks = await TaskService.getTasksByChild(parseInt(child.id));
+      setTasks(childTasks);
+      
+      // Fetch parent data to get number_of_tokens
+      if (!user?.id) return;
+      const familyData = await UserService.getFamilyData(user.id);
+      const parentTokens = familyData.parent.number_of_tokens || 100;
+      
+      // Calculate completed tasks and total gems earned
+      const completedTasks = childTasks.filter(task => task.status === 3).length; // 3 = completed
+      const totalGemsEarned = childTasks
+        .filter(task => task.status === 3) // 3 = completed
+        .reduce((sum, task) => sum + (task.gems || 0), 0);
+      
+      // Update child data with real values
+      setChild(prev => ({
+        ...prev,
+        completedTasks,
+        totalTasks: childTasks.length,
+        totalGemsEarned,
+        currentGoal: parentTokens // Use parent's number_of_tokens as goal
+      }));
+    } catch (error) {
+      console.error('Error loading child data:', error);
+      Alert.alert('Error', 'Failed to load child data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleBackPress = () => {
     navigation.navigate('SelectChild');
@@ -77,7 +117,7 @@ const ChildOverview: React.FC = () => {
   };
 
   const handleViewChildTasks = () => {
-    navigation.navigate('ChildTaskDashboard');
+    navigation.navigate('ChildTaskDashboard', { child });
   };
 
   const ActionButton: React.FC<{ 
@@ -86,7 +126,7 @@ const ChildOverview: React.FC = () => {
     icon: string; 
     onPress: () => void;
     color?: string;
-  }> = ({ title, subtitle, icon, onPress, color = '#3B82F6' }) => (
+  }> = ({ title, subtitle, icon, onPress, color = '#DC2626' }) => (
     <TouchableOpacity style={[styles.actionButton, { borderLeftColor: color }]} onPress={onPress}>
       <View style={styles.actionContent}>
         <Text style={styles.actionIcon}>{icon}</Text>
@@ -99,11 +139,29 @@ const ChildOverview: React.FC = () => {
     </TouchableOpacity>
   );
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{child.name}'s Overview</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#DC2626" />
+          <Text style={styles.loadingText}>Loading {child.name}'s data...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{child.name}'s Overview</Text>
         <View style={styles.placeholder} />
@@ -126,13 +184,6 @@ const ChildOverview: React.FC = () => {
           </View>
         </View>
 
-        {/* Progress Bar */}
-        <ChildProgressBar 
-          tasks={tasks} 
-          goalGems={child.currentGoal}
-          earnedGems={child.totalGemsEarned}
-        />
-
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
           <Text style={styles.actionsTitle}>Parent Controls</Text>
@@ -142,7 +193,7 @@ const ChildOverview: React.FC = () => {
             subtitle="Create new chores for this child"
             icon="➕"
             onPress={handleAddTask}
-            color="#10B981"
+            color="#DC2626"
           />
           
           <ActionButton
@@ -150,7 +201,7 @@ const ChildOverview: React.FC = () => {
             subtitle="Review completed tasks"
             icon="✅"
             onPress={handleApproveTasks}
-            color="#F59E0B"
+            color="#059669"
           />
           
           <ActionButton
@@ -158,39 +209,16 @@ const ChildOverview: React.FC = () => {
             subtitle={`Current: ${child.currentGoal} gems`}
             icon="🎯"
             onPress={handleViewEditGoal}
-            color="#8B5CF6"
+            color="#DC2626"
           />
           
           <ActionButton
-            title="View Child's Tasks"
+            title="View Tasks"
             subtitle="See tasks from child's perspective"
             icon="👶"
             onPress={handleViewChildTasks}
-            color="#3B82F6"
+            color="#059669"
           />
-        </View>
-
-        {/* Quick Stats */}
-        <View style={styles.statsContainer}>
-          <Text style={styles.statsTitle}>Quick Stats</Text>
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{child.totalGemsEarned}</Text>
-              <Text style={styles.statLabel}>Gems Earned</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{child.currentGoal - child.totalGemsEarned}</Text>
-              <Text style={styles.statLabel}>Gems to Goal</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{child.completedTasks}</Text>
-              <Text style={styles.statLabel}>Tasks Done</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{child.totalTasks - child.completedTasks}</Text>
-              <Text style={styles.statLabel}>Tasks Left</Text>
-            </View>
-          </View>
         </View>
       </ScrollView>
 
@@ -247,7 +275,7 @@ const ChildOverview: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -258,7 +286,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#FECACA',
   },
   backButton: {
     paddingVertical: 8,
@@ -266,13 +294,13 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#3B82F6',
+    color: '#DC2626',
     fontWeight: '500',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1E293B',
+    color: '#0F172A',
   },
   placeholder: {
     width: 60,
@@ -300,7 +328,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#059669',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 20,
@@ -316,7 +344,7 @@ const styles = StyleSheet.create({
   childName: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1E293B',
+    color: '#0F172A',
     marginBottom: 4,
   },
   childAge: {
@@ -335,7 +363,7 @@ const styles = StyleSheet.create({
   actionsTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#1E293B',
+    color: '#0F172A',
     marginBottom: 16,
   },
   actionButton: {
@@ -367,7 +395,7 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#0F172A',
     marginBottom: 4,
   },
   actionSubtitle: {
@@ -377,48 +405,6 @@ const styles = StyleSheet.create({
   actionArrow: {
     fontSize: 20,
     color: '#94A3B8',
-  },
-  statsContainer: {
-    margin: 16,
-    marginBottom: 32,
-  },
-  statsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1E293B',
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    width: '48%',
-    marginBottom: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1E293B',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#64748B',
-    textAlign: 'center',
   },
   modalOverlay: {
     flex: 1,
@@ -472,8 +458,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   goalButtonSelected: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
+    backgroundColor: '#DC2626',
+    borderColor: '#DC2626',
   },
   goalButtonText: {
     fontSize: 16,
@@ -501,7 +487,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     flex: 1,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#DC2626',
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -510,6 +496,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
   },
 });
 

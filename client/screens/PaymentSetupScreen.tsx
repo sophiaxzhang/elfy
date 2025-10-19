@@ -11,8 +11,10 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { IP_ADDRESS, PORT } from '@env';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../context/AuthContext';
 
 type RootStackParamList = {
   FamilySetup: undefined;
@@ -31,6 +33,7 @@ interface PaymentSetupFormData {
 
 const PaymentSetupScreen: React.FC = () => {
   const navigation = useNavigation<PaymentSetupScreenNavigationProp>();
+  const { user } = useAuth() as { user: { id: number } };
   const [formData, setFormData] = useState<PaymentSetupFormData>({
     cardNumber: '',
     expiryDate: '',
@@ -106,14 +109,45 @@ const PaymentSetupScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      // Here you would typically save the payment data
-      // For now, we'll just navigate to the next screen
-      navigation.navigate('TokenConfig');
+      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/payment-method`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user?.id,
+          cardNumber: formData.cardNumber.replace(/\s/g, ''), // Remove spaces
+          expiryDate: formData.expiryDate.replace(/\//g, ''), // Remove slashes (MMYY format)
+          cvv: formData.cvv,
+          cardholderName: formData.cardholderName.trim(),
+          billingAddress: formData.billingAddress.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Payment method error response:', errorText);
+        throw new Error(`Failed to save payment method: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Payment method saved:', data);
+
+      Alert.alert(
+        'Success!',
+        'Your payment method has been saved successfully.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.navigate('TokenConfig'),
+          },
+        ]
+      );
     } catch (error) {
       console.error('Payment setup error:', error);
       Alert.alert(
         'Payment Setup Failed',
-        'An error occurred during payment setup. Please try again.'
+        `An error occurred during payment setup: ${error.message}`
       );
     } finally {
       setIsLoading(false);
@@ -214,7 +248,7 @@ const PaymentSetupScreen: React.FC = () => {
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -318,12 +352,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   nextButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#DC2626',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,
     alignItems: 'center',
-    shadowColor: '#3B82F6',
+    shadowColor: '#DC2626',
     shadowOffset: {
       width: 0,
       height: 4,

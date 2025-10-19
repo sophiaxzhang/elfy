@@ -1,90 +1,107 @@
-import React, { createContext, useState, useContext } from 'react';
-import { storeToken, storeRefreshToken, clearTokens, apiCall } from '../services/authService';
-import { IP_ADDRESS, PORT } from '@env';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { UserService, User } from '../services/userService';
+import { getToken } from '../services/authService';
 
 interface AuthProps {
-  // authState?: {token: string | null; authenticated: boolean | null};
-  user?: {name: string, email: string, password: string | null, id: number} | null;
-  register: (name: string, email: string, password: string) => Promise<any>;
+  user: User | null;
+  isLoading: boolean;
+  setUser: (user: User | null) => void;
+  register: (name: string, email: string, password: string, pin: number) => Promise<any>;
   login: (email: string, password: string) => Promise<any>;
   logout: () => Promise<any>;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthProps | undefined>(undefined);
 
-const API_URL = `http://${IP_ADDRESS}:${PORT}/user/login`;
-
 export const AuthProvider = ({ children }: any) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = async (email: string, password: string) => {
+  // Check if user is logged in on app start
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
     try {
-        const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({email, password}),
-          });
-    
-        if (!response.ok) {
-          throw new Error("invalid login")
-        } 
-    
-        const data = await response.json();
-        console.log("login user data", data.user);
-        setUser(data.user.user);
-        console.log("storing token");
-
-        console.log("access token type: ", typeof (data.user.accessToken));
-        console.log("refresh token type: ", typeof (data.user.refreshToken));
-        await storeToken(data.user.accessToken);
-        await storeRefreshToken(data.user.refreshToken);
-        return data.user;
+      const token = await getToken();
+      if (token) {
+        const currentUser = await UserService.getCurrentUser();
+        setUser(currentUser);
+      }
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      console.error('Auth check error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
-        const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({name, email, password}),
-        });
+      setIsLoading(true);
+      const result = await UserService.login(email, password);
+      if (result.success) {
+        setUser(result.user.user);
+        return result.user;
+      } else {
+        throw new Error('Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        console.log("Response status:", response.status);
-        const data = await response.json();
-       // const text = await response.text();
-       // console.log("Response text:", text);
-
-          if (!response.ok) {
-            if (data.errorCode === "23505") {
-              alert("This email has an account associated with it. Please log in.");
-              return null;
-            }
-            console.error('Signup failed:', data);
-            throw new Error(data.message || 'Signup failed');
-          }
-          console.log("yay")
-          setUser(data.user);
-          await storeToken(data.accessToken);
-          await storeRefreshToken(data.refreshToken);
-          return data.user;
-
+  const register = async (name: string, email: string, password: string, pin: number) => {
+    try {
+      setIsLoading(true);
+      const result = await UserService.register({ name, email, password, pin });
+      if (result.success) {
+        setUser(result.user.user);
+        return result.user;
+      } else {
+        throw new Error('Registration failed');
+      }
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = async () => {
-    setUser(null);
-    await clearTokens();
+    try {
+      await UserService.logout();
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw error;
+    }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const currentUser = await UserService.getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Refresh user error:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoading, 
+      setUser,
+      login, 
+      register, 
+      logout, 
+      refreshUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );

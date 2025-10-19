@@ -17,13 +17,19 @@ export const UserService = {
         console.log("refresh token: " + refreshToken);
         return { accessToken: accessToken, refreshToken: refreshToken, user: createdUser }; 
     },
+    async createChild(newChild){
+        const {name, parentId, gem} = newChild;
+        const createdChild = await UserModel.createChild({ name, parentId, gem });
+        return createdChild;
+    },
+
     async loginUser(email, password){
         //return token !!!
         const user = await UserModel.findByEmail(email);
         if(!user){
             return null;
         }
-        const validPassword = await bcrypt.compare(password, user.hashed_password);
+        const validPassword = await bcrypt.compare(password, user.password);
         if(!validPassword){
             return null;
         }
@@ -34,6 +40,89 @@ export const UserService = {
             console.log("refresh token: " + refreshToken);
             return { accessToken: accessToken, refreshToken: refreshToken, user: user };
         }
+    },
+
+    async updateTokenConfig(userId, tokenConfig) {
+        const { numberOfTokens, giftCardAmount } = tokenConfig;
+        const updatedConfig = await UserModel.updateTokenConfig({ 
+            userId, 
+            numberOfTokens: parseInt(numberOfTokens), 
+            giftCardAmount: parseFloat(giftCardAmount) 
+        });
+        return updatedConfig;
+    },
+
+    async saveFamilySetup(userId, familyData) {
+        console.log('saveFamilySetup called with:', { userId, familyData });
+        const { email, password, pin, children } = familyData;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        
+        // Update parent information
+        const updatedParent = await UserModel.upsertParentInfo({ 
+            userId: parseInt(userId), // Convert to number
+            email, 
+            password: hashedPassword, 
+            pin
+        });
+        
+        console.log('upsertParentInfo result:', updatedParent);
+        
+        // Create individual child records
+        let createdChildren = [];
+        if (children && children.length > 0) {
+            console.log('Creating children:', children);
+            createdChildren = await UserModel.createChildren({ children, parentId: parseInt(userId) });
+            console.log('Created children:', createdChildren);
+        }
+        
+        return { parent: updatedParent, children: createdChildren };
+    },
+
+    async savePaymentMethod(userId, paymentData) {
+        const { cardNumber, expiryDate, cvv, cardholderName, billingAddress } = paymentData;
+        
+        // For now, we'll store the data as-is. In production, you'd want to encrypt sensitive data
+        const paymentMethod = await UserModel.createPaymentMethod({
+            userId: parseInt(userId),
+            cardNumber,
+            expiryDate,
+            cvv,
+            cardholderName,
+            billingAddress
+        });
+        return paymentMethod;
+    },
+
+    async validatePin(userId, pin) {
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            return false;
+        }
+        // Convert both to numbers for comparison since PIN is stored as integer
+        const userPin = parseInt(user.pin);
+        const inputPin = parseInt(pin);
+        console.log('PIN validation:', { userId, userPin, inputPin, match: userPin === inputPin });
+        return userPin === inputPin;
+    },
+
+    async getFamilyData(userId) {
+        // Get parent info
+        const parent = await UserModel.findById(userId);
+        if (!parent) {
+            throw new Error('Parent not found');
+        }
+
+        // Get children for this parent
+        const children = await UserModel.getChildrenByParentId(userId);
+        
+        return { parent, children };
+    },
+
+    async updateChildGems(childId, gemsToAdd) {
+        console.log('UserService.updateChildGems called with:', { childId, gemsToAdd });
+        const updatedChild = await UserModel.updateChildGems(childId, gemsToAdd);
+        console.log('UserService.updateChildGems result:', updatedChild);
+        return updatedChild;
     }
 }
 

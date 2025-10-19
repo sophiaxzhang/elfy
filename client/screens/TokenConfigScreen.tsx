@@ -11,8 +11,10 @@ import {
   ScrollView,
   ActivityIndicator,
 } from 'react-native';
+import { IP_ADDRESS, PORT } from '@env';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useAuth } from '../context/AuthContext';
 
 type RootStackParamList = {
   PaymentSetup: undefined;
@@ -28,6 +30,7 @@ interface TokenConfigFormData {
 
 const TokenConfigScreen: React.FC = () => {
   const navigation = useNavigation<TokenConfigScreenNavigationProp>();
+  const { user } = useAuth() as { user: { id: number } };
   const [formData, setFormData] = useState<TokenConfigFormData>({
     numberOfTokens: '',
     giftCardAmount: '',
@@ -69,10 +72,34 @@ const TokenConfigScreen: React.FC = () => {
       return;
     }
 
+    if (!user?.id) {
+      Alert.alert('Error', 'User not found. Please log in again.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Here you would typically save the token configuration and complete the signup
-      // For now, we'll just navigate to the dashboard
+      const response = await fetch(`http://${IP_ADDRESS}:${PORT}/user/token-config`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          numberOfTokens: formData.numberOfTokens,
+          giftCardAmount: formData.giftCardAmount,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Token config error response:', errorText);
+        throw new Error(`Failed to save token configuration: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Token config saved:', data);
+
       Alert.alert(
         'Success!',
         'Your family account has been created successfully.',
@@ -85,9 +112,10 @@ const TokenConfigScreen: React.FC = () => {
       );
     } catch (error) {
       console.error('Token config error:', error);
+      console.error('Error details:', error.message);
       Alert.alert(
         'Configuration Failed',
-        'An error occurred during token configuration. Please try again.'
+        `An error occurred during token configuration: ${error.message}`
       );
     } finally {
       setIsLoading(false);
@@ -141,7 +169,7 @@ const TokenConfigScreen: React.FC = () => {
 
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-              <Text style={styles.backButtonText}>Back</Text>
+              <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

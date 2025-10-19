@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,16 +6,20 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Child } from '../types/childTypes';
-import { Task } from '../types/taskTypes';
-import { useTaskContext } from '../context/TaskContext';
+import { Task, STATUS_MAP, STATUS_TO_INT } from '../types/taskTypes';
+import { TaskService } from '../services/taskService';
+import { UserService } from '../services/userService';
+import { useAuth } from '../context/AuthContext';
 
 type RootStackParamList = {
   ApproveTasks: { child: Child };
-  ChildOverview: undefined;
+  ChildOverview: { child: Child };
+  Dashboard: undefined;
   Start: undefined;
 };
 
@@ -26,16 +30,45 @@ const ApproveTasks: React.FC = () => {
   const navigation = useNavigation<ApproveTasksNavigationProp>();
   const route = useRoute<ApproveTasksRouteProp>();
   const { child } = route.params;
-  const { tasks, updateTask } = useTaskContext();
+  const auth = useAuth();
+  if (!auth) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  const { user } = auth;
 
-  // Get tasks waiting for approval for this child
-  const pendingTasks = tasks.filter(task => task.status === 'waiting_approval');
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [approvingTaskId, setApprovingTaskId] = useState<string | null>(null);
 
-  const handleBackPress = () => {
-    navigation.navigate('ChildOverview');
+  useEffect(() => {
+    loadTasks();
+  }, [child.id]);
+
+  const loadTasks = async () => {
+    try {
+      setIsLoading(true);
+      const childTasks = await TaskService.getTasksByChild(parseInt(child.id));
+      setTasks(childTasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      Alert.alert('Error', 'Failed to load tasks');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleApproveTask = (task: Task) => {
+  // Get tasks waiting for approval (status = 2)
+  const pendingTasks = tasks.filter(task => task.status === STATUS_TO_INT.waiting_approval);
+
+  const handleBackPress = () => {
+    navigation.navigate('ChildOverview', { child });
+  };
+
+  const handleDashboardPress = () => {
+    navigation.navigate('Dashboard');
+  };
+
+  const handleApproveTask = async (task: Task) => {
     Alert.alert(
       'Approve Task',
       `Are you sure you want to approve "${task.name}"? This will mark it as completed and award ${task.gems} gems to ${child.name}.`,
@@ -43,26 +76,40 @@ const ApproveTasks: React.FC = () => {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Approve',
-          onPress: () => {
-            const updatedTask = {
-              ...task,
-              status: 'completed' as const,
-              updatedAt: new Date().toISOString(),
-            };
-            updateTask(updatedTask);
-            
-            Alert.alert(
-              'Task Approved!',
-              `${child.name} has earned ${task.gems} gems for completing "${task.name}"!`,
-              [{ text: 'OK' }]
-            );
+          onPress: async () => {
+            try {
+              setApprovingTaskId(task.id);
+              
+              const updatedTask = await TaskService.updateTask(task.id, {
+                status: STATUS_TO_INT.completed, // 3 for completed
+              });
+              
+              // Update child gems in the database
+              await UserService.updateChildGems(parseInt(child.id), task.gems);
+              
+              // Update local state
+              setTasks(prev => prev.map(t => 
+                t.id === task.id ? { ...t, status: STATUS_TO_INT.completed } : t
+              ));
+              
+              Alert.alert(
+                'Task Approved!',
+                `${child.name} has earned ${task.gems} gems for completing "${task.name}"!`,
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('Error approving task:', error);
+              Alert.alert('Error', 'Failed to approve task. Please try again.');
+            } finally {
+              setApprovingTaskId(null);
+            }
           },
         },
       ]
     );
   };
 
-  const handleRejectTask = (task: Task) => {
+  const handleRejectTask = async (task: Task) => {
     Alert.alert(
       'Reject Task',
       `Are you sure you want to reject "${task.name}"? This will move it back to "In Progress" status.`,
@@ -71,19 +118,30 @@ const ApproveTasks: React.FC = () => {
         {
           text: 'Reject',
           style: 'destructive',
-          onPress: () => {
-            const updatedTask = {
-              ...task,
-              status: 'in_progress' as const,
-              updatedAt: new Date().toISOString(),
-            };
-            updateTask(updatedTask);
-            
-            Alert.alert(
-              'Task Rejected',
-              `"${task.name}" has been moved back to "In Progress" for ${child.name}.`,
-              [{ text: 'OK' }]
-            );
+          onPress: async () => {
+            try {
+              setApprovingTaskId(task.id);
+              
+              const updatedTask = await TaskService.updateTask(task.id, {
+                status: STATUS_TO_INT.in_progress, // 1 for in progress
+              });
+              
+              // Update local state
+              setTasks(prev => prev.map(t => 
+                t.id === task.id ? { ...t, status: STATUS_TO_INT.in_progress } : t
+              ));
+              
+              Alert.alert(
+                'Task Rejected',
+                `"${task.name}" has been moved back to "In Progress" for ${child.name}.`,
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              console.error('Error rejecting task:', error);
+              Alert.alert('Error', 'Failed to reject task. Please try again.');
+            } finally {
+              setApprovingTaskId(null);
+            }
           },
         },
       ]
@@ -98,12 +156,12 @@ const ApproveTasks: React.FC = () => {
       </View>
       
       <View style={styles.taskDetails}>
-        <Text style={styles.taskRoom}>🏠 {task.room}</Text>
-        {task.description && (
-          <Text style={styles.taskDescription}>📝 {task.description}</Text>
+        <Text style={styles.taskRoom}>🏠 {task.location}</Text>
+        {task.desc && (
+          <Text style={styles.taskDescription}>📝 {task.desc}</Text>
         )}
         <Text style={styles.taskDate}>
-          Submitted: {new Date(task.updatedAt).toLocaleDateString()}
+          Submitted: {task.updatedAt ? new Date(task.updatedAt).toLocaleDateString() : 'Unknown'}
         </Text>
       </View>
 
@@ -125,14 +183,36 @@ const ApproveTasks: React.FC = () => {
     </View>
   );
 
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Approve Tasks</Text>
+          <TouchableOpacity style={styles.dashboardButton} onPress={handleDashboardPress}>
+            <Text style={styles.dashboardButtonText}>🏠 Dashboard</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#DC2626" />
+          <Text style={styles.loadingText}>Loading tasks...</Text>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-          <Text style={styles.backButtonText}>← Back</Text>
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Approve Tasks</Text>
-        <View style={styles.placeholder} />
+        <TouchableOpacity style={styles.dashboardButton} onPress={handleDashboardPress}>
+          <Text style={styles.dashboardButtonText}>🏠 Dashboard</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.childInfo}>
@@ -172,7 +252,7 @@ const ApproveTasks: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -191,7 +271,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#3B82F6',
+    color: '#DC2626',
     fontWeight: '500',
   },
   headerTitle: {
@@ -201,6 +281,17 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 60,
+  },
+  dashboardButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+  },
+  dashboardButtonText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   childInfo: {
     paddingHorizontal: 20,
@@ -346,6 +437,17 @@ const styles = StyleSheet.create({
     color: '#64748B',
     textAlign: 'center',
     fontStyle: 'italic',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#DC2626',
   },
 });
 

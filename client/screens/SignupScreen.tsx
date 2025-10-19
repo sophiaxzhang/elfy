@@ -32,7 +32,8 @@ interface SignupFormData {
 
 const SignupScreen: React.FC = () => {
   const navigation = useNavigation<SignupScreenNavigationProp>();
-  const { register } = useAuth();
+  const auth = useAuth();
+  const register = auth?.register;
   const [formData, setFormData] = useState<SignupFormData>({
     name: '',
     email: '',
@@ -93,7 +94,11 @@ const SignupScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
-      await register(formData.name.trim(), formData.email.trim(), formData.password);
+      if (!register) {
+        Alert.alert('Error', 'Authentication service not available');
+        return;
+      }
+      await register(formData.name.trim(), formData.email.trim(), formData.password, 1234); // Default PIN
       Alert.alert(
         'Success!',
         'Your account has been created successfully.',
@@ -270,12 +275,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   signupButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#DC2626',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#3B82F6',
+    shadowColor: '#DC2626',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -305,7 +310,7 @@ const styles = StyleSheet.create({
   },
   loginLink: {
     fontSize: 16,
-    color: '#3B82F6',
+    color: '#059669',
     fontWeight: '600',
   },
 });

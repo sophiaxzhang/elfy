@@ -30,7 +30,8 @@ interface LoginFormData {
 
 const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
-  const { login } = useAuth();
+  const auth = useAuth();
+  const login = auth?.login;
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
@@ -73,6 +74,10 @@ const LoginScreen: React.FC = () => {
 
     setIsLoading(true);
     try {
+      if (!login) {
+        Alert.alert('Error', 'Authentication service not available');
+        return;
+      }
       await login(formData.email.trim(), formData.password);
       Alert.alert(
         'Welcome Back!',
@@ -223,12 +228,12 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   loginButton: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#DC2626',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#3B82F6',
+    shadowColor: '#DC2626',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -258,7 +263,7 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     fontSize: 16,
-    color: '#3B82F6',
+    color: '#059669',
     fontWeight: '600',
   },
 });
